@@ -1,0 +1,1279 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Chloe's Delivery Manifesto 📨</title>
+  <style>
+    :root {
+      --bg: #050811;
+      --panel: #0b1018;
+      --panel-alt: #111722;
+      --text: #e0e8ff;
+      --muted: #7a8aa5;
+      --accent: #00aeef;
+      --border: #1b2538;
+      --danger: #ff4b6b;
+      --font-main: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      padding: 0;
+      background: radial-gradient(circle at top, #141c33 0, #050811 55%);
+      color: var(--text);
+      font-family: var(--font-main);
+    }
+
+    .app {
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    header {
+      padding: 10px 16px;
+      border-bottom: 1px solid var(--border);
+      background: linear-gradient(90deg, #050811, #111722);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 14px;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+    }
+
+    header .title {
+      display: flex;
+      align-items: baseline;
+      gap: 8px;
+    }
+
+    header .title span.subtitle {
+      font-size: 11px;
+      color: var(--muted);
+      text-transform: none;
+      letter-spacing: 0.02em;
+    }
+
+    .tabs {
+      display: flex;
+      background: #050811;
+      border-bottom: 1px solid var(--border);
+      padding: 0 12px;
+      gap: 4px;
+    }
+
+    .tab-btn {
+      border: none;
+      background: transparent;
+      color: var(--muted);
+      padding: 8px 12px;
+      cursor: pointer;
+      font-size: 13px;
+      border-radius: 6px 6px 0 0;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .tab-btn.active {
+      background: var(--panel);
+      color: var(--text);
+      border-bottom: 2px solid var(--accent);
+    }
+
+    .tab-btn:hover {
+      color: var(--text);
+    }
+
+    .main {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .tab-content {
+      display: none;
+      height: 100%;
+    }
+
+    .tab-content.active {
+      display: flex;
+      height: 100%;
+    }
+
+    .columns {
+      display: flex;
+      flex: 1;
+      overflow: hidden;
+    }
+
+    .left-panel {
+      width: 260px;
+      min-width: 240px;
+      border-right: 1px solid var(--border);
+      padding: 10px;
+      background: rgba(0,0,0,0.15);
+      display: flex;
+      flex-direction: column;
+    }
+
+    .panel-title {
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: var(--muted);
+      margin-bottom: 6px;
+    }
+
+    .summary-line {
+      font-size: 11px;
+      color: var(--muted);
+      margin: 6px 2px 4px 2px;
+    }
+
+    .summary-line span.value {
+      color: var(--accent);
+      font-weight: 500;
+      margin-left: 4px;
+    }
+
+    .mission-list {
+      flex: 1;
+      background: var(--panel);
+      border-radius: 8px;
+      padding: 4px;
+      overflow-y: auto;
+      border: 1px solid var(--border);
+      font-size: 12px;
+    }
+
+    .mission-item {
+      padding: 6px 8px;
+      border-radius: 6px;
+      cursor: pointer;
+      margin-bottom: 2px;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .mission-item:hover { background: #151e32; }
+
+    .mission-item.active {
+      background: #12263a;
+      border: 1px solid var(--accent);
+    }
+
+    .mission-name {
+      font-weight: 500;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .mission-status {
+      font-size: 10px;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+    }
+
+    .mission-worth {
+      font-size: 11px;
+      color: var(--accent);
+    }
+
+    .mission-route {
+      font-size: 11px;
+      color: var(--muted);
+      white-space: nowrap;
+      text-overflow: ellipsis;
+      overflow: hidden;
+    }
+
+    .left-buttons {
+      margin-top: 8px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .btn {
+      border: none;
+      border-radius: 6px;
+      padding: 6px 10px;
+      font-size: 12px;
+      cursor: pointer;
+      background: #151e32;
+      color: var(--text);
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      justify-content: center;
+    }
+
+    .btn-accent {
+      background: linear-gradient(90deg, #0088d6, #00aeef);
+    }
+
+    .btn-accent:hover { filter: brightness(1.05); }
+
+    .btn-danger {
+      background: rgba(255, 75, 107, 0.18);
+      color: #ff9bb0;
+    }
+
+    .btn-sm {
+      font-size: 11px;
+      padding: 4px 8px;
+    }
+
+    .btn:hover { background: #1e2940; }
+
+    .right-panel {
+      flex: 1;
+      padding: 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      overflow: hidden;
+    }
+
+    .card {
+      background: var(--panel);
+      border-radius: 8px;
+      padding: 8px 10px;
+      border: 1px solid var(--border);
+    }
+
+    .card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 6px;
+      font-size: 13px;
+    }
+
+    .card-header span.label {
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: var(--muted);
+      font-size: 11px;
+    }
+
+    .card-header .smiley {
+      color: var(--accent);
+      font-size: 16px;
+    }
+
+    .field-row {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 4px;
+    }
+
+    .field {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      font-size: 12px;
+    }
+
+    .field label {
+      font-size: 11px;
+      color: var(--muted);
+    }
+
+    .field input,
+    .field select,
+    .field textarea {
+      background: #050915;
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 4px 6px;
+      color: var(--text);
+      font-family: inherit;
+      font-size: 12px;
+    }
+
+    .field textarea {
+      resize: vertical;
+      min-height: 40px;
+      max-height: 100px;
+    }
+
+    .field input:focus,
+    .field textarea:focus,
+    .field select:focus {
+      outline: 1px solid var(--accent);
+      border-color: var(--accent);
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 12px;
+    }
+
+    thead { background: #111722; }
+
+    th, td {
+      padding: 4px 6px;
+      text-align: left;
+      border-bottom: 1px solid #131c2a;
+    }
+
+    tbody tr:nth-child(odd) { background: #0b1018; }
+    tbody tr:nth-child(even) { background: #111722; }
+
+    tbody tr.active { outline: 1px solid var(--accent); }
+
+    .cargo-editor {
+      margin-top: 6px;
+      display: flex;
+      align-items: flex-end;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .cargo-editor .field { min-width: 80px; }
+
+    .cargo-editor-buttons {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .manifest {
+      font-family: "Consolas", "SF Mono", Menlo, Monaco, monospace;
+      font-size: 12px;
+      background: #050915;
+      border-radius: 6px;
+      padding: 8px;
+      border: 1px solid #1b2538;
+      white-space: pre-wrap;
+      max-height: 150px;
+      overflow-y: auto;
+    }
+
+    .history-layout {
+      display: flex;
+      flex: 1;
+      overflow: hidden;
+    }
+
+    .history-right-panel {
+      flex: 1;
+      padding: 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      overflow: hidden;
+    }
+
+    .read-only-value {
+      font-size: 13px;
+      color: var(--text);
+    }
+
+    .read-only-label {
+      font-size: 11px;
+      color: var(--muted);
+      margin-bottom: 2px;
+    }
+
+    .readonly-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+      gap: 8px;
+    }
+
+    .settings-panel {
+      flex: 1;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      padding: 20px;
+    }
+
+    .settings-inner {
+      max-width: 480px;
+      width: 100%;
+    }
+
+    .settings-row {
+      margin-top: 10px;
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      justify-content: flex-start;
+    }
+
+    .settings-note {
+      font-size: 11px;
+      color: var(--muted);
+      margin-top: 4px;
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <header>
+      <div class="title">
+        <span>Chloe's Delivery Manifesto 📨</span>
+        <span class="subtitle">Star Citizen Cargo Run Tracker</span>
+      </div>
+    </header>
+
+    <div class="tabs">
+      <button class="tab-btn active" data-tab="active">
+        <span>Active Missions</span> <span>🚀</span>
+      </button>
+      <button class="tab-btn" data-tab="history">
+        <span>History</span> <span>📦</span>
+      </button>
+      <button class="tab-btn" data-tab="settings">
+        <span>Settings</span> <span>⚙️</span>
+      </button>
+    </div>
+
+    <div class="main">
+      <!-- ACTIVE TAB -->
+      <div class="tab-content active" id="tab-active">
+        <div class="columns">
+          <div class="left-panel">
+            <div class="panel-title">Missions</div>
+            <div id="active-mission-list" class="mission-list"></div>
+
+            <div class="summary-line">
+              Total Potential:
+              <span id="active-total-earnings" class="value">0</span>
+            </div>
+
+            <div class="left-buttons">
+              <button id="btn-new-mission" class="btn btn-accent">
+                ➕ New Mission
+              </button>
+              <button id="btn-complete-mission" class="btn">
+                ✅ Complete
+              </button>
+              <button id="btn-cancel-mission" class="btn btn-danger">
+                ✖ Cancel
+              </button>
+            </div>
+          </div>
+
+          <div class="right-panel">
+            <!-- Mission details -->
+            <div class="card">
+              <div class="card-header">
+                <span class="label">Mission Details</span>
+                <span class="smiley">:)</span>
+              </div>
+
+              <div class="field-row">
+                <div class="field">
+                  <label>Mission Name</label>
+                  <input id="mission-name" type="text" />
+                </div>
+              </div>
+
+              <div class="field-row">
+                <div class="field">
+                  <label>📦 Pick Up From</label>
+                  <input id="mission-pickup" type="text" />
+                </div>
+                <div class="field">
+                  <label>➡️ Deliver To</label>
+                  <input id="mission-delivery" type="text" />
+                </div>
+              </div>
+
+              <div class="field">
+                <label>Notes</label>
+                <input id="mission-notes" type="text" placeholder="Ship, route, timing, etc." />
+              </div>
+            </div>
+
+            <!-- Cargo & manifest -->
+            <div class="card" style="flex: 1; display:flex; flex-direction:column; gap:8px; overflow:hidden;">
+              <div class="card-header">
+                <span class="label">Cargo Items 📦</span>
+              </div>
+
+              <div style="flex:1;min-height:0;overflow:hidden;display:flex;flex-direction:column;gap:6px;">
+                <div style="flex:1;min-height:0;overflow:auto;">
+                  <table>
+                    <thead>
+                      <tr>
+                        <th style="width:40px;">Qty</th>
+                        <th>Item</th>
+                        <th style="width:90px;">Size</th>
+                        <th style="width:90px;">Value</th>
+                      </tr>
+                    </thead>
+                    <tbody id="cargo-table-body"></tbody>
+                  </table>
+                </div>
+
+                <div class="cargo-editor">
+                  <div class="field" style="max-width:70px;">
+                    <label>Qty</label>
+                    <input id="cargo-qty" type="number" min="1" />
+                  </div>
+                  <div class="field" style="min-width:160px;">
+                    <label>Item</label>
+                    <input id="cargo-name" type="text" />
+                  </div>
+                  <div class="field" style="max-width:110px;">
+                    <label>Size</label>
+                    <select id="cargo-size">
+                      <option value="EX.Small">EX.Small</option>
+                      <option value="Small">Small</option>
+                      <option value="Medium">Medium</option>
+                      <option value="Large">Large</option>
+                    </select>
+                  </div>
+                  <div class="field" style="max-width:120px;">
+                    <label>Value</label>
+                    <input id="cargo-value" type="text" placeholder="50k" />
+                  </div>
+                  <div class="cargo-editor-buttons">
+                    <button id="btn-add-cargo" class="btn btn-sm btn-accent">Add</button>
+                    <button id="btn-update-cargo" class="btn btn-sm">Update</button>
+                    <button id="btn-remove-cargo" class="btn btn-sm btn-danger">Remove</button>
+                  </div>
+                </div>
+
+                <div>
+                  <div class="card-header" style="margin-bottom:4px;">
+                    <span class="label">Formatted Manifest</span>
+                    <span style="font-size:11px;color:var(--muted);">read-only</span>
+                  </div>
+                  <div id="manifest-text" class="manifest"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- HISTORY TAB -->
+      <div class="tab-content" id="tab-history">
+        <div class="history-layout">
+          <div class="left-panel">
+            <div class="panel-title">History</div>
+            <div id="history-mission-list" class="mission-list"></div>
+
+            <div class="summary-line">
+              Total Earned:
+              <span id="history-total-earned" class="value">0</span>
+            </div>
+
+            <div class="left-buttons">
+              <button id="btn-delete-history-side" class="btn btn-danger btn-sm">
+                Delete Selected
+              </button>
+            </div>
+          </div>
+
+          <div class="history-right-panel">
+            <div class="card">
+              <div class="card-header">
+                <span class="label">Mission Summary</span>
+                <div style="display:flex;align-items:center;gap:6px;font-size:11px;color:var(--muted);">
+                  <span>Read-only</span>
+                  <button id="btn-delete-history-detail" class="btn btn-sm btn-danger">
+                    Delete
+                  </button>
+                </div>
+              </div>
+              <div class="readonly-grid">
+                <div>
+                  <div class="read-only-label">Mission Name</div>
+                  <div id="history-name" class="read-only-value">—</div>
+                </div>
+                <div>
+                  <div class="read-only-label">Status</div>
+                  <div id="history-status" class="read-only-value">—</div>
+                </div>
+                <div>
+                  <div class="read-only-label">📦 Pick Up From</div>
+                  <div id="history-pickup" class="read-only-value">—</div>
+                </div>
+                <div>
+                  <div class="read-only-label">➡️ Deliver To</div>
+                  <div id="history-delivery" class="read-only-value">—</div>
+                </div>
+              </div>
+              <div style="margin-top:6px;">
+                <div class="read-only-label">Notes</div>
+                <div id="history-notes" class="read-only-value">—</div>
+              </div>
+            </div>
+
+            <div class="card" style="flex:1;display:flex;flex-direction:column;gap:6px;overflow:hidden;">
+              <div class="card-header">
+                <span class="label">Manifest 📜</span>
+              </div>
+              <div id="history-manifest" class="manifest" style="flex:1;min-height:0;overflow:auto;"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- SETTINGS TAB -->
+      <div class="tab-content" id="tab-settings">
+        <div class="settings-panel">
+          <div class="settings-inner card">
+            <div class="card-header">
+              <span class="label">Settings</span>
+            </div>
+            <div>
+              <div class="read-only-label">Saved Data</div>
+              <p class="settings-note">
+                This app stores your active missions and history locally in your browser (cookies + localStorage).
+              </p>
+              <div class="settings-row">
+                <button id="btn-clear-storage" class="btn btn-danger">
+                  Clear Saved Missions
+                </button>
+              </div>
+              <p class="settings-note">
+                This will erase all active and historical missions from this browser. It cannot be undone.
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // ---------- STATE ----------
+    let activeMissions = [];
+    let historyMissions = [];
+    let currentMissionIndex = null;
+    let currentHistoryIndex = null;
+    let selectedCargoIndex = null;
+
+    const STORAGE_KEY = "sc_manifest_v1";
+
+    // ---------- COOKIES HELPERS ----------
+    function setCookie(name, value, days) {
+      try {
+        const d = new Date();
+        d.setTime(d.getTime() + days * 24 * 60 * 60 * 1000);
+        const expires = "expires=" + d.toUTCString();
+        document.cookie = name + "=" + encodeURIComponent(value) + ";" + expires + ";path=/";
+      } catch (e) {
+        console.error("Failed to set cookie", e);
+      }
+    }
+
+    function getCookie(name) {
+      const cname = name + "=";
+      const decoded = document.cookie || "";
+      const parts = decoded.split(";");
+      for (let c of parts) {
+        c = c.trim();
+        if (c.indexOf(cname) === 0) {
+          return decodeURIComponent(c.substring(cname.length));
+        }
+      }
+      return null;
+    }
+
+    function clearStorageCompletely() {
+      try {
+        localStorage.removeItem(STORAGE_KEY);
+      } catch (e) {
+        console.warn("localStorage remove failed", e);
+      }
+      // Expire cookie
+      setCookie(STORAGE_KEY, "", -1);
+
+      // Reset in-memory state
+      activeMissions = [createEmptyMission(1)];
+      historyMissions = [];
+      currentMissionIndex = 0;
+      currentHistoryIndex = null;
+      selectedCargoIndex = null;
+
+      renderActiveMissionList();
+      renderHistoryMissionList();
+      renderActiveMissionDetails();
+      renderHistoryDetails();
+      renderTotals();
+    }
+
+    function createEmptyMission(n) {
+      return {
+        name: "Mission " + n,
+        pickup: "",
+        delivery: "",
+        status: "In Progress",
+        notes: "",
+        cargo: []
+      };
+    }
+
+    // ---------- AMOUNT PARSING / FORMATTING ----------
+    function parseAmount(str) {
+      if (str == null) return 0;
+      let s = String(str).trim().toLowerCase();
+      if (!s) return 0;
+
+      // Remove currency symbols/spaces
+      s = s.replace(/[\s\$]/g, "");
+
+      let multiplier = 1;
+      if (s.endsWith("k")) {
+        multiplier = 1e3;
+        s = s.slice(0, -1);
+      } else if (s.endsWith("m")) {
+        multiplier = 1e6;
+        s = s.slice(0, -1);
+      } else if (s.endsWith("b")) {
+        multiplier = 1e9;
+        s = s.slice(0, -1);
+      }
+
+      s = s.replace(/,/g, "");
+      if (!s) return 0;
+      const v = parseFloat(s);
+      if (isNaN(v)) return 0;
+      return v * multiplier;
+    }
+
+    function formatAmountShort(num) {
+      if (!num || isNaN(num)) return "0";
+      const abs = Math.abs(num);
+      let value = num;
+      let suffix = "";
+
+      if (abs >= 1e9) {
+        value = num / 1e9;
+        suffix = "b";
+      } else if (abs >= 1e6) {
+        value = num / 1e6;
+        suffix = "m";
+      } else if (abs >= 1e3) {
+        value = num / 1e3;
+        suffix = "k";
+      } else {
+        return num.toLocaleString("en-US", { maximumFractionDigits: 0 });
+      }
+
+      let s = value.toFixed(2);
+      s = s.replace(/\.00$/, "").replace(/(\.\d)0$/, "$1");
+      return s + suffix;
+    }
+
+    function computeMissionTotal(mission) {
+      if (!mission || !Array.isArray(mission.cargo)) return 0;
+      let total = 0;
+      for (const item of mission.cargo) {
+        const qty = parseFloat(item.qty ?? 0) || 0;
+        const valPer = parseAmount(item.value);
+        total += qty * valPer;
+      }
+      return total;
+    }
+
+    function computeActiveTotal() {
+      return activeMissions.reduce((sum, m) => sum + computeMissionTotal(m), 0);
+    }
+
+    function computeHistoryTotalEarned() {
+      return historyMissions.reduce((sum, m) => {
+        if (String(m.status || "").toLowerCase() === "completed") {
+          return sum + computeMissionTotal(m);
+        }
+        return sum;
+      }, 0);
+    }
+
+    // ---------- STORAGE ----------
+    function loadState() {
+      try {
+        // Prefer cookie; fallback to localStorage
+        let data = null;
+        const cookieVal = getCookie(STORAGE_KEY);
+        if (cookieVal) {
+          data = JSON.parse(cookieVal);
+        } else {
+          const raw = localStorage.getItem(STORAGE_KEY);
+          if (raw) data = JSON.parse(raw);
+        }
+
+        if (!data) {
+          activeMissions = [createEmptyMission(1)];
+          historyMissions = [];
+          currentMissionIndex = 0;
+          return;
+        }
+
+        activeMissions = Array.isArray(data.active) ? data.active : [];
+        historyMissions = Array.isArray(data.history) ? data.history : [];
+        if (!activeMissions.length) activeMissions.push(createEmptyMission(1));
+        currentMissionIndex = 0;
+      } catch (e) {
+        console.error("Failed to load state", e);
+        activeMissions = [createEmptyMission(1)];
+        historyMissions = [];
+        currentMissionIndex = 0;
+      }
+    }
+
+    function saveState() {
+      const data = { active: activeMissions, history: historyMissions };
+      const json = JSON.stringify(data);
+      try {
+        localStorage.setItem(STORAGE_KEY, json);
+      } catch (e) {
+        console.warn("localStorage failed", e);
+      }
+      setCookie(STORAGE_KEY, json, 365);
+    }
+
+    // ---------- HELPERS ----------
+    function getEl(id) {
+      return document.getElementById(id);
+    }
+
+    function buildRouteLabel(mission, index) {
+      const name = mission.name || `Mission ${index + 1}`;
+      const pickup = (mission.pickup || "").trim();
+      const delivery = (mission.delivery || "").trim();
+      const status = mission.status || "In Progress";
+
+      const parts = [];
+      if (pickup) parts.push(pickup);
+      if (delivery) parts.push(delivery);
+      const route = parts.join(" → ");
+
+      return { name, route, status };
+    }
+
+    // ---------- RENDERING ----------
+    function renderTotals() {
+      const activeTotal = computeActiveTotal();
+      const historyTotal = computeHistoryTotalEarned();
+      const activeSpan = getEl("active-total-earnings");
+      const historySpan = getEl("history-total-earned");
+      if (activeSpan) activeSpan.textContent = formatAmountShort(activeTotal);
+      if (historySpan) historySpan.textContent = formatAmountShort(historyTotal);
+    }
+
+    function renderActiveMissionList() {
+      const container = getEl("active-mission-list");
+      container.innerHTML = "";
+      activeMissions.forEach((m, idx) => {
+        const { name, route, status } = buildRouteLabel(m, idx);
+        const worth = computeMissionTotal(m);
+        const worthShort = formatAmountShort(worth);
+
+        const div = document.createElement("div");
+        div.className = "mission-item" + (idx === currentMissionIndex ? " active" : "");
+        div.dataset.index = idx;
+
+        const nameRow = document.createElement("div");
+        nameRow.className = "mission-name";
+        nameRow.textContent = name;
+
+        const statusSpan = document.createElement("span");
+        statusSpan.className = "mission-status";
+        statusSpan.textContent = status;
+        nameRow.appendChild(statusSpan);
+
+        const worthRow = document.createElement("div");
+        worthRow.className = "mission-worth";
+        worthRow.textContent = "Worth: " + (worthShort || "0");
+
+        const routeRow = document.createElement("div");
+        routeRow.className = "mission-route";
+        routeRow.textContent = route || "—";
+
+        div.appendChild(nameRow);
+        div.appendChild(worthRow);
+        div.appendChild(routeRow);
+        container.appendChild(div);
+      });
+
+      renderTotals();
+    }
+
+    function renderHistoryMissionList() {
+      const container = getEl("history-mission-list");
+      container.innerHTML = "";
+      historyMissions.forEach((m, idx) => {
+        const { name, route, status } = buildRouteLabel(m, idx);
+        const worth = computeMissionTotal(m);
+        const worthShort = formatAmountShort(worth);
+
+        const div = document.createElement("div");
+        div.className = "mission-item" + (idx === currentHistoryIndex ? " active" : "");
+        div.dataset.index = idx;
+
+        const nameRow = document.createElement("div");
+        nameRow.className = "mission-name";
+        nameRow.textContent = name;
+
+        const statusSpan = document.createElement("span");
+        statusSpan.className = "mission-status";
+        statusSpan.textContent = status;
+        nameRow.appendChild(statusSpan);
+
+        const worthRow = document.createElement("div");
+        worthRow.className = "mission-worth";
+        worthRow.textContent = "Worth: " + (worthShort || "0");
+
+        const routeRow = document.createElement("div");
+        routeRow.className = "mission-route";
+        routeRow.textContent = route || "—";
+
+        div.appendChild(nameRow);
+        div.appendChild(worthRow);
+        div.appendChild(routeRow);
+        container.appendChild(div);
+      });
+
+      renderTotals();
+    }
+
+    function renderActiveMissionDetails() {
+      if (currentMissionIndex == null || !activeMissions[currentMissionIndex]) return;
+      const m = activeMissions[currentMissionIndex];
+      getEl("mission-name").value = m.name || "";
+      getEl("mission-pickup").value = m.pickup || "";
+      getEl("mission-delivery").value = m.delivery || "";
+      getEl("mission-notes").value = m.notes || "";
+
+      const tbody = getEl("cargo-table-body");
+      tbody.innerHTML = "";
+      m.cargo.forEach((c, idx) => {
+        const tr = document.createElement("tr");
+        tr.dataset.index = idx;
+        if (idx === selectedCargoIndex) tr.classList.add("active");
+
+        const tdQty = document.createElement("td");
+        tdQty.textContent = c.qty ?? "";
+
+        const tdName = document.createElement("td");
+        tdName.textContent = c.name ?? "";
+
+        const tdSize = document.createElement("td");
+        tdSize.textContent = c.size ?? "";
+
+        const tdValue = document.createElement("td");
+        tdValue.textContent = c.value ?? "";
+
+        tr.appendChild(tdQty);
+        tr.appendChild(tdName);
+        tr.appendChild(tdSize);
+        tr.appendChild(tdValue);
+        tbody.appendChild(tr);
+      });
+
+      if (selectedCargoIndex == null || selectedCargoIndex >= m.cargo.length) {
+        selectedCargoIndex = null;
+        getEl("cargo-qty").value = "";
+        getEl("cargo-name").value = "";
+        getEl("cargo-size").value = "EX.Small";
+        getEl("cargo-value").value = "";
+      }
+
+      getEl("manifest-text").textContent = buildManifest(m);
+      renderTotals();
+    }
+
+    function renderHistoryDetails() {
+      if (currentHistoryIndex == null || !historyMissions[currentHistoryIndex]) {
+        getEl("history-name").textContent = "—";
+        getEl("history-status").textContent = "—";
+        getEl("history-pickup").textContent = "—";
+        getEl("history-delivery").textContent = "—";
+        getEl("history-notes").textContent = "—";
+        getEl("history-manifest").textContent = "";
+        renderTotals();
+        return;
+      }
+      const m = historyMissions[currentHistoryIndex];
+      getEl("history-name").textContent = m.name || "—";
+      getEl("history-status").textContent = m.status || "—";
+      getEl("history-pickup").textContent = m.pickup || "—";
+      getEl("history-delivery").textContent = m.delivery || "—";
+      getEl("history-notes").textContent = m.notes || "—";
+      getEl("history-manifest").textContent = buildManifest(m);
+      renderTotals();
+    }
+
+    // ---------- SYNC FORM -> STATE ----------
+    function saveCurrentMissionFromForm() {
+      if (currentMissionIndex == null || !activeMissions[currentMissionIndex]) return;
+      const m = activeMissions[currentMissionIndex];
+      m.name = getEl("mission-name").value.trim();
+      m.pickup = getEl("mission-pickup").value.trim();
+      m.delivery = getEl("mission-delivery").value.trim();
+      m.notes = getEl("mission-notes").value.trim();
+      if (!m.status) m.status = "In Progress";
+      saveState();
+      renderActiveMissionList();
+      getEl("manifest-text").textContent = buildManifest(m);
+      renderTotals();
+    }
+
+    // ---------- ACTIONS ----------
+    function selectActiveMission(index) {
+      if (index < 0 || index >= activeMissions.length) return;
+      saveCurrentMissionFromForm();
+      currentMissionIndex = index;
+      selectedCargoIndex = null;
+      renderActiveMissionList();
+      renderActiveMissionDetails();
+    }
+
+    function selectHistoryMission(index) {
+      if (index < 0 || index >= historyMissions.length) return;
+      currentHistoryIndex = index;
+      renderHistoryMissionList();
+      renderHistoryDetails();
+    }
+
+    function addNewMission() {
+      saveCurrentMissionFromForm();
+      const n = activeMissions.length + 1;
+      activeMissions.push(createEmptyMission(n));
+      currentMissionIndex = activeMissions.length - 1;
+      selectedCargoIndex = null;
+      saveState();
+      renderActiveMissionList();
+      renderActiveMissionDetails();
+    }
+
+    function completeCurrentMission() {
+      if (currentMissionIndex == null || !activeMissions[currentMissionIndex]) return;
+      saveCurrentMissionFromForm();
+      const m = activeMissions.splice(currentMissionIndex, 1)[0];
+      m.status = "Completed";
+      historyMissions.push(m);
+      currentHistoryIndex = historyMissions.length - 1;
+
+      if (!activeMissions.length) {
+        activeMissions.push(createEmptyMission(1));
+        currentMissionIndex = 0;
+      } else if (currentMissionIndex >= activeMissions.length) {
+        currentMissionIndex = activeMissions.length - 1;
+      }
+
+      selectedCargoIndex = null;
+      saveState();
+      renderActiveMissionList();
+      renderHistoryMissionList();
+      renderActiveMissionDetails();
+      renderHistoryDetails();
+    }
+
+    function cancelCurrentMission() {
+      if (currentMissionIndex == null || !activeMissions[currentMissionIndex]) return;
+      if (!confirm("Mark this mission as cancelled and move it to History?")) return;
+      saveCurrentMissionFromForm();
+      const m = activeMissions.splice(currentMissionIndex, 1)[0];
+      m.status = "Cancelled";
+      historyMissions.push(m);
+      currentHistoryIndex = historyMissions.length - 1;
+
+      if (!activeMissions.length) {
+        activeMissions.push(createEmptyMission(1));
+        currentMissionIndex = 0;
+      } else if (currentMissionIndex >= activeMissions.length) {
+        currentMissionIndex = activeMissions.length - 1;
+      }
+
+      selectedCargoIndex = null;
+      saveState();
+      renderActiveMissionList();
+      renderHistoryMissionList();
+      renderActiveMissionDetails();
+      renderHistoryDetails();
+    }
+
+    function deleteHistoryMission() {
+      if (currentHistoryIndex == null || !historyMissions[currentHistoryIndex]) return;
+      if (!confirm("Delete this history mission?")) return;
+
+      historyMissions.splice(currentHistoryIndex, 1);
+      if (!historyMissions.length) {
+        currentHistoryIndex = null;
+      } else if (currentHistoryIndex >= historyMissions.length) {
+        currentHistoryIndex = historyMissions.length - 1;
+      }
+
+      saveState();
+      renderHistoryMissionList();
+      renderHistoryDetails();
+    }
+
+    function addCargoItem() {
+      if (currentMissionIndex == null || !activeMissions[currentMissionIndex]) return;
+      const qtyStr = getEl("cargo-qty").value.trim();
+      const name = getEl("cargo-name").value.trim();
+      const size = getEl("cargo-size").value;
+      const value = getEl("cargo-value").value.trim();
+
+      if (!qtyStr || !name) {
+        alert("Quantity and Item name are required.");
+        return;
+      }
+      const qty = parseInt(qtyStr, 10);
+      if (Number.isNaN(qty) || qty <= 0) {
+        alert("Quantity must be a positive number.");
+        return;
+      }
+
+      const m = activeMissions[currentMissionIndex];
+      m.cargo.push({ qty, name, size, value });
+      selectedCargoIndex = m.cargo.length - 1;
+      saveState();
+      renderActiveMissionDetails();
+      renderActiveMissionList();
+    }
+
+    function updateCargoItem() {
+      if (currentMissionIndex == null || !activeMissions[currentMissionIndex]) return;
+      if (selectedCargoIndex == null) {
+        alert("Select a cargo row to update.");
+        return;
+      }
+      const qtyStr = getEl("cargo-qty").value.trim();
+      const name = getEl("cargo-name").value.trim();
+      const size = getEl("cargo-size").value;
+      const value = getEl("cargo-value").value.trim();
+
+      if (!qtyStr || !name) {
+        alert("Quantity and Item name are required.");
+        return;
+      }
+      const qty = parseInt(qtyStr, 10);
+      if (Number.isNaN(qty) || qty <= 0) {
+        alert("Quantity must be a positive number.");
+        return;
+      }
+
+      const m = activeMissions[currentMissionIndex];
+      if (!m.cargo[selectedCargoIndex]) return;
+      m.cargo[selectedCargoIndex] = { qty, name, size, value };
+      saveState();
+      renderActiveMissionDetails();
+      renderActiveMissionList();
+    }
+
+    function removeCargoItem() {
+      if (currentMissionIndex == null || !activeMissions[currentMissionIndex]) return;
+      if (selectedCargoIndex == null) {
+        alert("Select a cargo row to remove.");
+        return;
+      }
+      const m = activeMissions[currentMissionIndex];
+      m.cargo.splice(selectedCargoIndex, 1);
+      selectedCargoIndex = null;
+      saveState();
+      renderActiveMissionDetails();
+      renderActiveMissionList();
+    }
+
+    // ---------- INIT / EVENTS ----------
+    function initTabs() {
+      const tabs = document.querySelectorAll(".tab-btn");
+      tabs.forEach(btn => {
+        btn.addEventListener("click", () => {
+          const tab = btn.dataset.tab;
+          tabs.forEach(b => b.classList.toggle("active", b === btn));
+          document.querySelectorAll(".tab-content").forEach(c => {
+            c.classList.toggle("active", c.id === "tab-" + tab);
+          });
+        });
+      });
+    }
+
+    function initEvents() {
+      // Mission list click
+      getEl("active-mission-list").addEventListener("click", (e) => {
+        const item = e.target.closest(".mission-item");
+        if (!item) return;
+        const idx = parseInt(item.dataset.index, 10);
+        if (!Number.isNaN(idx)) selectActiveMission(idx);
+      });
+
+      getEl("history-mission-list").addEventListener("click", (e) => {
+        const item = e.target.closest(".mission-item");
+        if (!item) return;
+        const idx = parseInt(item.dataset.index, 10);
+        if (!Number.isNaN(idx)) selectHistoryMission(idx);
+      });
+
+      // Mission form inputs
+      ["mission-name", "mission-pickup", "mission-delivery", "mission-notes"].forEach(id => {
+        getEl(id).addEventListener("input", () => {
+          saveCurrentMissionFromForm();
+        });
+      });
+
+      // Cargo table row click
+      getEl("cargo-table-body").addEventListener("click", (e) => {
+        const tr = e.target.closest("tr");
+        if (!tr) return;
+        const idx = parseInt(tr.dataset.index, 10);
+        if (Number.isNaN(idx)) return;
+        selectedCargoIndex = idx;
+        const m = activeMissions[currentMissionIndex];
+        const c = m.cargo[idx];
+        getEl("cargo-qty").value = c.qty ?? "";
+        getEl("cargo-name").value = c.name ?? "";
+        getEl("cargo-size").value = c.size ?? "EX.Small";
+        getEl("cargo-value").value = c.value ?? "";
+        renderActiveMissionDetails();
+      });
+
+      // Buttons
+      getEl("btn-new-mission").addEventListener("click", addNewMission);
+      getEl("btn-complete-mission").addEventListener("click", completeCurrentMission);
+      getEl("btn-cancel-mission").addEventListener("click", cancelCurrentMission);
+
+      getEl("btn-add-cargo").addEventListener("click", addCargoItem);
+      getEl("btn-update-cargo").addEventListener("click", updateCargoItem);
+      getEl("btn-remove-cargo").addEventListener("click", removeCargoItem);
+
+      // History delete buttons
+      getEl("btn-delete-history-side").addEventListener("click", deleteHistoryMission);
+      getEl("btn-delete-history-detail").addEventListener("click", deleteHistoryMission);
+
+      // Settings clear storage
+      getEl("btn-clear-storage").addEventListener("click", () => {
+        if (!confirm("Clear all saved missions (active + history) from this browser?")) return;
+        clearStorageCompletely();
+      });
+    }
+
+    function init() {
+      loadState();
+      initTabs();
+      initEvents();
+      renderActiveMissionList();
+      renderHistoryMissionList();
+      renderActiveMissionDetails();
+      renderHistoryDetails();
+      renderTotals();
+    }
+
+    window.addEventListener("DOMContentLoaded", init);
+  </script>
+</body>
+</html>
