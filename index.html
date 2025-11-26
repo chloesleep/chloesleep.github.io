@@ -779,7 +779,7 @@
       for (const item of mission.cargo) {
         const qty = parseFloat(item.qty ?? 0) || 0;
         const valPer = parseAmount(item.value);
-        total += qty * valPer;
+        total += 1 * valPer;
       }
       return total;
     }
