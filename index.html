@@ -696,10 +696,8 @@
       } catch (e) {
         console.warn("localStorage remove failed", e);
       }
-      // Expire cookie
       setCookie(STORAGE_KEY, "", -1);
 
-      // Reset in-memory state
       activeMissions = [createEmptyMission(1)];
       historyMissions = [];
       currentMissionIndex = 0;
@@ -730,7 +728,6 @@
       let s = String(str).trim().toLowerCase();
       if (!s) return 0;
 
-      // Remove currency symbols/spaces
       s = s.replace(/[\s\$]/g, "");
 
       let multiplier = 1;
@@ -803,7 +800,6 @@
     // ---------- STORAGE ----------
     function loadState() {
       try {
-        // Prefer cookie; fallback to localStorage
         let data = null;
         const cookieVal = getCookie(STORAGE_KEY);
         if (cookieVal) {
@@ -874,6 +870,7 @@
 
     function renderActiveMissionList() {
       const container = getEl("active-mission-list");
+      if (!container) return;
       container.innerHTML = "";
       activeMissions.forEach((m, idx) => {
         const { name, route, status } = buildRouteLabel(m, idx);
@@ -912,6 +909,7 @@
 
     function renderHistoryMissionList() {
       const container = getEl("history-mission-list");
+      if (!container) return;
       container.innerHTML = "";
       historyMissions.forEach((m, idx) => {
         const { name, route, status } = buildRouteLabel(m, idx);
@@ -948,15 +946,48 @@
       renderTotals();
     }
 
+    function buildManifest(mission) {
+      const lines = [];
+      const title = mission.name || "Delivery Manifest";
+      lines.push(`${title} 📨`);
+      lines.push("");
+
+      const pickup = (mission.pickup || "").trim();
+      const delivery = (mission.delivery || "").trim();
+      lines.push("📦 Pick Up From " + pickup);
+      lines.push("➡️ Deliver To " + delivery);
+      lines.push("");
+
+      for (const item of mission.cargo || []) {
+        const qty = item.qty ?? "";
+        const name = item.name ?? "";
+        const size = item.size ?? "";
+        const value = (item.value || "").trim();
+        if (value) {
+          lines.push(`${qty}x  ${name} ${size} ${value}`);
+        } else {
+          lines.push(`${qty}x  ${name} ${size}`);
+        }
+      }
+      lines.push("");
+      lines.push("========================================");
+      lines.push(`Status: ${mission.status || "In Progress"}`);
+      if (mission.notes) {
+        lines.push(`Notes: ${mission.notes}`);
+      }
+      return lines.join("\n");
+    }
+
     function renderActiveMissionDetails() {
       if (currentMissionIndex == null || !activeMissions[currentMissionIndex]) return;
       const m = activeMissions[currentMissionIndex];
-      getEl("mission-name").value = m.name || "";
-      getEl("mission-pickup").value = m.pickup || "";
-      getEl("mission-delivery").value = m.delivery || "";
-      getEl("mission-notes").value = m.notes || "";
+      if (getEl("mission-name")) getEl("mission-name").value = m.name || "";
+      if (getEl("mission-pickup")) getEl("mission-pickup").value = m.pickup || "";
+      if (getEl("mission-delivery")) getEl("mission-delivery").value = m.delivery || "";
+      if (getEl("mission-notes")) getEl("mission-notes").value = m.notes || "";
 
       const tbody = getEl("cargo-table-body");
+      if (!tbody) return;
       tbody.innerHTML = "";
       m.cargo.forEach((c, idx) => {
         const tr = document.createElement("tr");
@@ -984,34 +1015,35 @@
 
       if (selectedCargoIndex == null || selectedCargoIndex >= m.cargo.length) {
         selectedCargoIndex = null;
-        getEl("cargo-qty").value = "";
-        getEl("cargo-name").value = "";
-        getEl("cargo-size").value = "EX.Small";
-        getEl("cargo-value").value = "";
+        if (getEl("cargo-qty")) getEl("cargo-qty").value = "";
+        if (getEl("cargo-name")) getEl("cargo-name").value = "";
+        if (getEl("cargo-size")) getEl("cargo-size").value = "EX.Small";
+        if (getEl("cargo-value")) getEl("cargo-value").value = "";
       }
 
-      getEl("manifest-text").textContent = buildManifest(m);
+      const manifestEl = getEl("manifest-text");
+      if (manifestEl) manifestEl.textContent = buildManifest(m);
       renderTotals();
     }
 
     function renderHistoryDetails() {
       if (currentHistoryIndex == null || !historyMissions[currentHistoryIndex]) {
-        getEl("history-name").textContent = "—";
-        getEl("history-status").textContent = "—";
-        getEl("history-pickup").textContent = "—";
-        getEl("history-delivery").textContent = "—";
-        getEl("history-notes").textContent = "—";
-        getEl("history-manifest").textContent = "";
+        if (getEl("history-name")) getEl("history-name").textContent = "—";
+        if (getEl("history-status")) getEl("history-status").textContent = "—";
+        if (getEl("history-pickup")) getEl("history-pickup").textContent = "—";
+        if (getEl("history-delivery")) getEl("history-delivery").textContent = "—";
+        if (getEl("history-notes")) getEl("history-notes").textContent = "—";
+        if (getEl("history-manifest")) getEl("history-manifest").textContent = "";
         renderTotals();
         return;
       }
       const m = historyMissions[currentHistoryIndex];
-      getEl("history-name").textContent = m.name || "—";
-      getEl("history-status").textContent = m.status || "—";
-      getEl("history-pickup").textContent = m.pickup || "—";
-      getEl("history-delivery").textContent = m.delivery || "—";
-      getEl("history-notes").textContent = m.notes || "—";
-      getEl("history-manifest").textContent = buildManifest(m);
+      if (getEl("history-name")) getEl("history-name").textContent = m.name || "—";
+      if (getEl("history-status")) getEl("history-status").textContent = m.status || "—";
+      if (getEl("history-pickup")) getEl("history-pickup").textContent = m.pickup || "—";
+      if (getEl("history-delivery")) getEl("history-delivery").textContent = m.delivery || "—";
+      if (getEl("history-notes")) getEl("history-notes").textContent = m.notes || "—";
+      if (getEl("history-manifest")) getEl("history-manifest").textContent = buildManifest(m);
       renderTotals();
     }
 
@@ -1019,14 +1051,15 @@
     function saveCurrentMissionFromForm() {
       if (currentMissionIndex == null || !activeMissions[currentMissionIndex]) return;
       const m = activeMissions[currentMissionIndex];
-      m.name = getEl("mission-name").value.trim();
-      m.pickup = getEl("mission-pickup").value.trim();
-      m.delivery = getEl("mission-delivery").value.trim();
-      m.notes = getEl("mission-notes").value.trim();
+      if (getEl("mission-name")) m.name = getEl("mission-name").value.trim();
+      if (getEl("mission-pickup")) m.pickup = getEl("mission-pickup").value.trim();
+      if (getEl("mission-delivery")) m.delivery = getEl("mission-delivery").value.trim();
+      if (getEl("mission-notes")) m.notes = getEl("mission-notes").value.trim();
       if (!m.status) m.status = "In Progress";
       saveState();
       renderActiveMissionList();
-      getEl("manifest-text").textContent = buildManifest(m);
+      const manifestEl = getEl("manifest-text");
+      if (manifestEl) manifestEl.textContent = buildManifest(m);
       renderTotals();
     }
 
@@ -1123,10 +1156,16 @@
 
     function addCargoItem() {
       if (currentMissionIndex == null || !activeMissions[currentMissionIndex]) return;
-      const qtyStr = getEl("cargo-qty").value.trim();
-      const name = getEl("cargo-name").value.trim();
-      const size = getEl("cargo-size").value;
-      const value = getEl("cargo-value").value.trim();
+      const qtyEl = getEl("cargo-qty");
+      const nameEl = getEl("cargo-name");
+      const sizeEl = getEl("cargo-size");
+      const valueEl = getEl("cargo-value");
+      if (!qtyEl || !nameEl || !sizeEl || !valueEl) return;
+
+      const qtyStr = qtyEl.value.trim();
+      const name = nameEl.value.trim();
+      const size = sizeEl.value;
+      const value = valueEl.value.trim();
 
       if (!qtyStr || !name) {
         alert("Quantity and Item name are required.");
@@ -1152,10 +1191,16 @@
         alert("Select a cargo row to update.");
         return;
       }
-      const qtyStr = getEl("cargo-qty").value.trim();
-      const name = getEl("cargo-name").value.trim();
-      const size = getEl("cargo-size").value;
-      const value = getEl("cargo-value").value.trim();
+      const qtyEl = getEl("cargo-qty");
+      const nameEl = getEl("cargo-name");
+      const sizeEl = getEl("cargo-size");
+      const valueEl = getEl("cargo-value");
+      if (!qtyEl || !nameEl || !sizeEl || !valueEl) return;
+
+      const qtyStr = qtyEl.value.trim();
+      const name = nameEl.value.trim();
+      const size = sizeEl.value;
+      const value = valueEl.value.trim();
 
       if (!qtyStr || !name) {
         alert("Quantity and Item name are required.");
@@ -1203,60 +1248,76 @@
       });
     }
 
+    function safeOnClick(id, handler) {
+      const el = getEl(id);
+      if (el && typeof handler === "function") {
+        el.addEventListener("click", handler);
+      }
+    }
+
     function initEvents() {
-      // Mission list click
-      getEl("active-mission-list").addEventListener("click", (e) => {
-        const item = e.target.closest(".mission-item");
-        if (!item) return;
-        const idx = parseInt(item.dataset.index, 10);
-        if (!Number.isNaN(idx)) selectActiveMission(idx);
-      });
-
-      getEl("history-mission-list").addEventListener("click", (e) => {
-        const item = e.target.closest(".mission-item");
-        if (!item) return;
-        const idx = parseInt(item.dataset.index, 10);
-        if (!Number.isNaN(idx)) selectHistoryMission(idx);
-      });
-
-      // Mission form inputs
-      ["mission-name", "mission-pickup", "mission-delivery", "mission-notes"].forEach(id => {
-        getEl(id).addEventListener("input", () => {
-          saveCurrentMissionFromForm();
+      const activeList = getEl("active-mission-list");
+      if (activeList) {
+        activeList.addEventListener("click", (e) => {
+          const item = e.target.closest(".mission-item");
+          if (!item) return;
+          const idx = parseInt(item.dataset.index, 10);
+          if (!Number.isNaN(idx)) selectActiveMission(idx);
         });
+      }
+
+      const histList = getEl("history-mission-list");
+      if (histList) {
+        histList.addEventListener("click", (e) => {
+          const item = e.target.closest(".mission-item");
+          if (!item) return;
+          const idx = parseInt(item.dataset.index, 10);
+          if (!Number.isNaN(idx)) selectHistoryMission(idx);
+        });
+      }
+
+      ["mission-name", "mission-pickup", "mission-delivery", "mission-notes"].forEach(id => {
+        const el = getEl(id);
+        if (el) {
+          el.addEventListener("input", () => {
+            saveCurrentMissionFromForm();
+          });
+        }
       });
 
-      // Cargo table row click
-      getEl("cargo-table-body").addEventListener("click", (e) => {
-        const tr = e.target.closest("tr");
-        if (!tr) return;
-        const idx = parseInt(tr.dataset.index, 10);
-        if (Number.isNaN(idx)) return;
-        selectedCargoIndex = idx;
-        const m = activeMissions[currentMissionIndex];
-        const c = m.cargo[idx];
-        getEl("cargo-qty").value = c.qty ?? "";
-        getEl("cargo-name").value = c.name ?? "";
-        getEl("cargo-size").value = c.size ?? "EX.Small";
-        getEl("cargo-value").value = c.value ?? "";
-        renderActiveMissionDetails();
-      });
+      const cargoBody = getEl("cargo-table-body");
+      if (cargoBody) {
+        cargoBody.addEventListener("click", (e) => {
+          const tr = e.target.closest("tr");
+          if (!tr) return;
+          const idx = parseInt(tr.dataset.index, 10);
+          if (Number.isNaN(idx)) return;
+          selectedCargoIndex = idx;
+          const m = activeMissions[currentMissionIndex];
+          const c = m.cargo[idx];
+          if (getEl("cargo-qty")) getEl("cargo-qty").value = c.qty ?? "";
+          if (getEl("cargo-name")) getEl("cargo-name").value = c.name ?? "";
+          if (getEl("cargo-size")) getEl("cargo-size").value = c.size ?? "EX.Small";
+          if (getEl("cargo-value")) getEl("cargo-value").value = c.value ?? "";
+          renderActiveMissionDetails();
+        });
+      }
 
-      // Buttons
-      getEl("btn-new-mission").addEventListener("click", addNewMission);
-      getEl("btn-complete-mission").addEventListener("click", completeCurrentMission);
-      getEl("btn-cancel-mission").addEventListener("click", cancelCurrentMission);
+      // Active buttons
+      safeOnClick("btn-new-mission", addNewMission);
+      safeOnClick("btn-complete-mission", completeCurrentMission);
+      safeOnClick("btn-cancel-mission", cancelCurrentMission);
 
-      getEl("btn-add-cargo").addEventListener("click", addCargoItem);
-      getEl("btn-update-cargo").addEventListener("click", updateCargoItem);
-      getEl("btn-remove-cargo").addEventListener("click", removeCargoItem);
+      safeOnClick("btn-add-cargo", addCargoItem);
+      safeOnClick("btn-update-cargo", updateCargoItem);
+      safeOnClick("btn-remove-cargo", removeCargoItem);
 
       // History delete buttons
-      getEl("btn-delete-history-side").addEventListener("click", deleteHistoryMission);
-      getEl("btn-delete-history-detail").addEventListener("click", deleteHistoryMission);
+      safeOnClick("btn-delete-history-side", deleteHistoryMission);
+      safeOnClick("btn-delete-history-detail", deleteHistoryMission);
 
       // Settings clear storage
-      getEl("btn-clear-storage").addEventListener("click", () => {
+      safeOnClick("btn-clear-storage", () => {
         if (!confirm("Clear all saved missions (active + history) from this browser?")) return;
         clearStorageCompletely();
       });
