@@ -597,6 +597,7 @@
                         <th style="width:40px;">Qty</th>
                         <th>Item</th>
                         <th style="width:90px;">Size</th>
+                        <th style="width:120px;">Destination</th>
                         <th style="width:90px;">Value</th>
                       </tr>
                     </thead>
@@ -621,6 +622,10 @@
                       <option value="Medium">Medium</option>
                       <option value="Large">Large</option>
                     </select>
+                  </div>
+                  <div class="field" style="max-width:150px;">
+                    <label>Destination</label>
+                    <select id="cargo-destination"></select>
                   </div>
                   <div class="field" style="max-width:120px;">
                     <label>Value</label>
@@ -1244,10 +1249,12 @@
         const name = item.name ?? "";
         const size = item.size ?? "";
         const value = (item.value || "").trim();
+        const dest = (item.destination || "").trim();
+        const destSuffix = dest ? ` -> ${dest}` : "";
         if (value) {
-          lines.push(`${qty}x  ${name} ${size} ${value}`);
+          lines.push(`${qty}x  ${name} ${size} ${value}${destSuffix}`);
         } else {
-          lines.push(`${qty}x  ${name} ${size}`);
+          lines.push(`${qty}x  ${name} ${size}${destSuffix}`);
         }
       }
       lines.push("");
@@ -1262,6 +1269,47 @@
       return lines.join("\n");
     }
 
+    function getMissionDestinations(mission) {
+      const destinations = [];
+      if (!mission) return destinations;
+      const first = (mission.delivery || "").trim();
+      if (first) destinations.push(first);
+      const stages = Array.isArray(mission.stages) ? mission.stages : [];
+      stages.forEach((s) => {
+        const v = (s || "").trim();
+        if (v) destinations.push(v);
+      });
+      return destinations;
+    }
+
+    function populateCargoDestinationSelect(mission) {
+      const select = getEl("cargo-destination");
+      if (!select) return;
+      const prev = select.value;
+      const destinations = getMissionDestinations(mission);
+      select.innerHTML = "";
+      if (!destinations.length) {
+        const opt = document.createElement("option");
+        opt.value = "";
+        opt.textContent = "No destinations";
+        select.appendChild(opt);
+        select.disabled = true;
+        return;
+      }
+      select.disabled = destinations.length <= 1;
+      destinations.forEach((d) => {
+        const opt = document.createElement("option");
+        opt.value = d;
+        opt.textContent = d;
+        select.appendChild(opt);
+      });
+      if (prev && destinations.includes(prev)) {
+        select.value = prev;
+      } else {
+        select.selectedIndex = 0;
+      }
+    }
+
     function renderActiveMissionDetails() {
       if (currentMissionIndex == null || !activeMissions[currentMissionIndex]) return;
       const m = activeMissions[currentMissionIndex];
@@ -1274,6 +1322,8 @@
       if (getEl("mission-pickup")) getEl("mission-pickup").value = m.pickup || "";
       if (getEl("mission-delivery")) getEl("mission-delivery").value = m.delivery || "";
       if (getEl("mission-notes")) getEl("mission-notes").value = m.notes || "";
+
+      populateCargoDestinationSelect(m);
 
       // extra stages editor
       const stagesContainer = document.getElementById("mission-extra-stages");
@@ -1320,12 +1370,16 @@
         const tdSize = document.createElement("td");
         tdSize.textContent = c.size ?? "";
 
+        const tdDest = document.createElement("td");
+        tdDest.textContent = c.destination ?? "";
+
         const tdValue = document.createElement("td");
         tdValue.textContent = c.value ?? "";
 
         tr.appendChild(tdQty);
         tr.appendChild(tdName);
         tr.appendChild(tdSize);
+        tr.appendChild(tdDest);
         tr.appendChild(tdValue);
         tbody.appendChild(tr);
       });
@@ -1336,6 +1390,13 @@
         if (getEl("cargo-name")) getEl("cargo-name").value = "";
         if (getEl("cargo-size")) getEl("cargo-size").value = "EX.Small";
         if (getEl("cargo-value")) getEl("cargo-value").value = "";
+        const destSel = getEl("cargo-destination");
+        if (destSel) {
+          const dests = getMissionDestinations(m);
+          if (dests.length) {
+            destSel.value = dests[0];
+          }
+        }
       }
 
       const manifestEl = getEl("manifest-text");
@@ -1501,6 +1562,7 @@
       const qtyEl = getEl("cargo-qty");
       const nameEl = getEl("cargo-name");
       const sizeEl = getEl("cargo-size");
+      const destEl = getEl("cargo-destination");
       const valueEl = getEl("cargo-value");
       if (!qtyEl || !nameEl || !sizeEl || !valueEl) return;
 
@@ -1508,6 +1570,7 @@
       const name = nameEl.value.trim();
       const size = sizeEl.value;
       const value = valueEl.value.trim();
+      const destination = destEl ? destEl.value : "";
 
       if (!qtyStr || !name) {
         alert("Quantity and Item name are required.");
@@ -1520,7 +1583,7 @@
       }
 
       const m = activeMissions[currentMissionIndex];
-      m.cargo.push({ qty, name, size, value });
+      m.cargo.push({ qty, name, size, value, destination });
       selectedCargoIndex = m.cargo.length - 1;
       saveState();
       renderActiveMissionDetails();
@@ -1537,6 +1600,7 @@
       const qtyEl = getEl("cargo-qty");
       const nameEl = getEl("cargo-name");
       const sizeEl = getEl("cargo-size");
+      const destEl = getEl("cargo-destination");
       const valueEl = getEl("cargo-value");
       if (!qtyEl || !nameEl || !sizeEl || !valueEl) return;
 
@@ -1544,6 +1608,7 @@
       const name = nameEl.value.trim();
       const size = sizeEl.value;
       const value = valueEl.value.trim();
+      const destination = destEl ? destEl.value : "";
 
       if (!qtyStr || !name) {
         alert("Quantity and Item name are required.");
@@ -1557,7 +1622,7 @@
 
       const m = activeMissions[currentMissionIndex];
       if (!m.cargo[selectedCargoIndex]) return;
-      m.cargo[selectedCargoIndex] = { qty, name, size, value };
+      m.cargo[selectedCargoIndex] = { qty, name, size, value, destination };
       saveState();
       renderActiveMissionDetails();
       renderActiveMissionList();
@@ -1663,13 +1728,23 @@
           const idx = parseInt(tr.dataset.index, 10);
           if (Number.isNaN(idx)) return;
           selectedCargoIndex = idx;
+          renderActiveMissionDetails();
           const m = activeMissions[currentMissionIndex];
           const c = m.cargo[idx];
           if (getEl("cargo-qty")) getEl("cargo-qty").value = c.qty ?? "";
           if (getEl("cargo-name")) getEl("cargo-name").value = c.name ?? "";
           if (getEl("cargo-size")) getEl("cargo-size").value = c.size ?? "EX.Small";
           if (getEl("cargo-value")) getEl("cargo-value").value = c.value ?? "";
-          renderActiveMissionDetails();
+          const destSel = getEl("cargo-destination");
+          if (destSel) {
+            const destVal = (c.destination || "").trim();
+            const options = Array.from(destSel.options || []);
+            if (destVal && options.some((o) => o.value === destVal)) {
+              destSel.value = destVal;
+            } else if (options.length) {
+              destSel.selectedIndex = 0;
+            }
+          }
         });
       }
 
