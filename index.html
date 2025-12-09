@@ -814,6 +814,10 @@
 
     let syncUsername = "";
     const SYNC_MAX_PEERS = 32;
+    const ICE_SERVERS = [
+      { urls: "stun:stun.l.google.com:19302" },
+      { urls: "stun:stun1.l.google.com:19302" }
+    ];
     const syncNodeId = (function () {
       try {
         if (window.crypto && crypto.randomUUID) {
@@ -1686,37 +1690,36 @@
         });
       });
 
-      // Single "Use Code" button: detects whether the pasted code is an offer or an answer
+      // Single "Use Code" button: chooses behavior based on role (host vs guest)
       safeOnClick("btn-sync-use-code", () => {
         const raw = getEl("sync-remote-signal")?.value || "";
         if (!raw.trim()) {
           alert("Paste a code from your partner first.");
           return;
         }
-        let desc;
         try {
-          desc = JSON.parse(raw.trim());
+          const desc = JSON.parse(raw.trim());
+          if (!desc || typeof desc !== "object" || !desc.sdp || !desc.type) {
+            alert("Code does not look like a valid WebRTC offer/answer.");
+            return;
+          }
         } catch (e) {
           alert("Code is not valid JSON.");
           return;
         }
-        if (!desc || typeof desc !== "object" || !desc.type) {
-          alert("Code does not look like a valid WebRTC offer/answer.");
-          return;
-        }
 
-        if (desc.type === "offer") {
-          joinFromOffer().catch((err) => {
-            console.error(err);
-            alert("Failed to use offer: " + (err && err.message ? err.message : err));
-          });
-        } else if (desc.type === "answer") {
+        if (syncState.role === "host") {
+          // Host always applies answers from guests
           applyAnswerAsHost().catch((err) => {
             console.error(err);
             alert("Failed to use answer: " + (err && err.message ? err.message : err));
           });
         } else {
-          alert("Unsupported code type: " + desc.type);
+          // Idle or guest uses offers from host
+          joinFromOffer().catch((err) => {
+            console.error(err);
+            alert("Failed to use offer: " + (err && err.message ? err.message : err));
+          });
         }
       });
 
@@ -2078,7 +2081,7 @@
         return;
       }
       syncState.role = "host";
-      const pc = new RTCPeerConnection();
+      const pc = new RTCPeerConnection({ iceServers: ICE_SERVERS });
       const peer = { id: generatePeerId(), pc, dc: null, isHostSide: true };
       syncState.peers.push(peer);
       const dc = pc.createDataChannel("missions");
@@ -2121,7 +2124,7 @@
         alert("Partner offer code is not valid JSON.");
         return;
       }
-      const pc = new RTCPeerConnection();
+      const pc = new RTCPeerConnection({ iceServers: ICE_SERVERS });
       const peer = { id: generatePeerId(), pc, dc: null, isHostSide: false };
       syncState.peers.push(peer);
       pc.ondatachannel = (ev) => {
@@ -2177,7 +2180,7 @@
         alert("Partner answer is not valid JSON.");
         return;
       }
-      await syncState.pc.setRemoteDescription(remoteDesc);
+      await peer.pc.setRemoteDescription(remoteDesc);
       appendSyncLog("Applied partner answer. Waiting for sync channel to open...");
     }
 
