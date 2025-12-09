@@ -196,6 +196,13 @@
       overflow: hidden;
     }
 
+    .mission-started-by {
+      font-size: 10px;
+      color: var(--muted);
+      text-align: right;
+      margin-top: 2px;
+    }
+
     .left-buttons {
       margin-top: 8px;
       display: flex;
@@ -721,8 +728,9 @@
               <div class="settings-note">
                 Used to mark who started and updated missions while syncing.
               </div>
-              <div class="settings-row" style="margin-top:8px;">
+              <div class="settings-row" style="margin-top:8px; gap:6px;">
                 <button id="btn-sync-save-username" class="btn btn-sm btn-accent">Set Username</button>
+                <button id="btn-sync-disconnect" class="btn btn-sm">Disconnect</button>
                 <span id="sync-status-pill" class="sync-status-pill disconnected">Disconnected</span>
               </div>
             </div>
@@ -1155,9 +1163,15 @@
         routeRow.className = "mission-route";
         routeRow.textContent = route || "—";
 
+        const startedRow = document.createElement("div");
+        startedRow.className = "mission-started-by";
+        const startedLabel = m.startedBy && m.startedBy !== "Unknown" ? m.startedBy : "—";
+        startedRow.textContent = "Started by: " + startedLabel;
+
         div.appendChild(nameRow);
         div.appendChild(worthRow);
         div.appendChild(routeRow);
+        div.appendChild(startedRow);
         container.appendChild(div);
       });
 
@@ -1683,6 +1697,12 @@
         if (ensureValidUsername()) {
           appendSyncLog("Username set to " + syncUsername + ".");
         }
+      });
+
+      safeOnClick("btn-sync-disconnect", () => {
+        closeAllSyncConnections();
+        syncState.role = "idle";
+        appendSyncLog("Disconnected from all peers.");
       });
 
       safeOnClick("btn-sync-create-offer", () => {
