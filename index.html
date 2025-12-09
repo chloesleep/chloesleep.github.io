@@ -420,6 +420,66 @@
       color: var(--muted);
       margin-top: 4px;
     }
+
+    .sync-layout {
+      display: flex;
+      flex: 1;
+      overflow: hidden;
+    }
+
+    .sync-status-pill {
+      font-size: 11px;
+      padding: 2px 6px;
+      border-radius: 999px;
+      background: #151e32;
+      color: var(--muted);
+    }
+
+    .sync-status-pill.connected {
+      color: #42f59b;
+      background: rgba(66, 245, 155, 0.12);
+    }
+
+    .sync-status-pill.disconnected {
+      color: var(--muted);
+      background: #151e32;
+    }
+
+    .sync-log {
+      font-family: "Consolas", "SF Mono", Menlo, Monaco, monospace;
+      font-size: 11px;
+      background: #050915;
+      border-radius: 6px;
+      border: 1px solid #1b2538;
+      padding: 6px;
+      max-height: 160px;
+      overflow-y: auto;
+      white-space: pre-wrap;
+    }
+
+    .sync-textarea {
+      width: 100%;
+      min-height: 80px;
+      max-height: 140px;
+      resize: vertical;
+      background: #050915;
+      border-radius: 4px;
+      border: 1px solid var(--border);
+      padding: 4px 6px;
+      color: var(--text);
+      font-family: "Consolas", "SF Mono", Menlo, Monaco, monospace;
+      font-size: 11px;
+    }
+
+    .field label.inline-label {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .field label.inline-label input[type="checkbox"] {
+      margin: 0;
+    }
   </style>
 </head>
 <body>
@@ -437,6 +497,9 @@
       </button>
       <button class="tab-btn" data-tab="history">
         <span>History</span> <span>📦</span>
+      </button>
+      <button class="tab-btn" data-tab="sync">
+        <span>Sync</span> <span>📡</span>
       </button>
       <button class="tab-btn" data-tab="settings">
         <span>Settings</span> <span>⚙️</span>
@@ -486,14 +549,26 @@
 
               <div class="field-row">
                 <div class="field">
+                  <label>Started By</label>
+                  <input id="mission-started-by" type="text" placeholder="Auto-set when created" />
+                </div>
+              </div>
+
+              <div class="field-row">
+                <div class="field">
                   <label>📦 Pick Up From</label>
                   <input id="mission-pickup" type="text" />
                 </div>
                 <div class="field">
-                  <label>➡️ Deliver To</label>
+                  <label class="inline-label">
+                    <span>➡️ Deliver To</span>
+                    <button id="btn-mission-add-stage" type="button" class="btn btn-sm">+ Stage</button>
+                  </label>
                   <input id="mission-delivery" type="text" />
                 </div>
               </div>
+
+              <div id="mission-extra-stages"></div>
 
               <div class="field">
                 <label>Notes</label>
@@ -611,6 +686,10 @@
                   <div class="read-only-label">➡️ Deliver To</div>
                   <div id="history-delivery" class="read-only-value">—</div>
                 </div>
+                <div>
+                  <div class="read-only-label">➡️ Second Delivery</div>
+                  <div id="history-delivery2" class="read-only-value">—</div>
+                </div>
               </div>
               <div style="margin-top:6px;">
                 <div class="read-only-label">Notes</div>
@@ -624,6 +703,76 @@
               </div>
               <div id="history-manifest" class="manifest" style="flex:1;min-height:0;overflow:auto;"></div>
             </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- SYNC TAB -->
+      <div class="tab-content" id="tab-sync">
+        <div class="sync-layout">
+          <div class="left-panel">
+            <div class="panel-title">Sync Session</div>
+            <div class="card">
+              <div class="field">
+                <label>Username / Callsign</label>
+                <input id="sync-username" type="text" placeholder="e.g. ChloeHauler" />
+              </div>
+              <div id="sync-username-error" class="settings-note" style="color: var(--danger); display:none;"></div>
+              <div class="settings-note">
+                Used to mark who started and updated missions while syncing.
+              </div>
+              <div class="settings-row" style="margin-top:8px;">
+                <button id="btn-sync-save-username" class="btn btn-sm btn-accent">Set Username</button>
+                <span id="sync-status-pill" class="sync-status-pill disconnected">Disconnected</span>
+              </div>
+            </div>
+
+            <div class="summary-line" style="margin-top:10px;">
+              While connected, mission changes are shared live between wingmates.
+            </div>
+          </div>
+
+          <div class="history-right-panel">
+            <div class="card">
+              <div class="card-header">
+                <span class="label">Share Signal</span>
+                <span style="font-size:11px;color:var(--muted);">No servers or accounts required</span>
+              </div>
+              <div class="settings-note">
+                Host: click <strong>Create Offer</strong> and send the code below to a friend (it auto-copies to your clipboard).<br />
+                Joiner: paste the host's code into <strong>Partner Signal</strong> and click <strong>Use Code</strong> (your reply is auto-copied).<br />
+                Host: paste the joiner's reply into <strong>Partner Signal</strong> and click <strong>Use Code</strong>.
+              </div>
+              <div class="field" style="margin-top:6px;">
+                <label>Your Signal To Share</label>
+                <textarea id="sync-local-signal" class="sync-textarea" readonly></textarea>
+              </div>
+              <div class="settings-row" style="margin-top:6px;">
+                <button id="btn-sync-create-offer" class="btn btn-sm btn-accent">Create Offer</button>
+              </div>
+              <div class="settings-row" style="margin-top:8px;">
+                <label>Partner Signal</label>
+                <textarea id="sync-remote-signal" class="sync-textarea" placeholder="Paste a code here"></textarea>
+              </div>
+              <div class="settings-row" style="margin-top:6px;">
+                <button id="btn-sync-use-code" class="btn btn-sm">Use Code</button>
+              </div>
+            </div>
+
+            <div class="card" style="flex:1;display:flex;flex-direction:column;gap:6px;overflow:hidden;">
+              <div class="card-header">
+                <span class="label">Session Log</span>
+              </div>
+              <div id="sync-log" class="sync-log" style="flex:1;min-height:0;"></div>
+            </div>
+
+            <div class="card">
+              <div class="card-header">
+                <span class="label">Players & Roles</span>
+              </div>
+              <div id="sync-roster" class="settings-note"></div>
+            </div>
+
           </div>
         </div>
       </div>
@@ -663,7 +812,41 @@
     let currentHistoryIndex = null;
     let selectedCargoIndex = null;
 
+    let syncUsername = "";
+    const SYNC_MAX_PEERS = 32;
+    const syncNodeId = (function () {
+      try {
+        if (window.crypto && crypto.randomUUID) {
+          return "n-" + crypto.randomUUID();
+        }
+      } catch (e) {}
+      return (
+        "n-" +
+        Date.now().toString(36) +
+        "-" +
+        Math.random().toString(36).slice(2, 8)
+      );
+    })();
+
+    let syncState = {
+      peers: [], // { id, pc, dc, isHostSide }
+      isConnected: false,
+      isApplyingRemote: false,
+      role: "idle", // "idle" | "host" | "guest"
+      admins: {}, // { username: true }
+    };
+
     const STORAGE_KEY = "sc_manifest_v1";
+    const OFFENSIVE_NAME_PARTS = [
+      "fuck",
+      "shit",
+      "bitch",
+      "cunt",
+      "asshole",
+      "dick",
+      "cock",
+      "piss"
+    ];
 
     // ---------- COOKIES HELPERS ----------
     function setCookie(name, value, days) {
@@ -713,9 +896,13 @@
 
     function createEmptyMission(n) {
       return {
+        id: generateMissionId(),
         name: "Mission " + n,
         pickup: "",
         delivery: "",
+        // extra delivery stages beyond the first destination
+        stages: [],
+        startedBy: syncUsername || "local",
         status: "In Progress",
         notes: "",
         cargo: []
@@ -818,6 +1005,8 @@
 
         activeMissions = Array.isArray(data.active) ? data.active : [];
         historyMissions = Array.isArray(data.history) ? data.history : [];
+        activeMissions.forEach(ensureMissionShape);
+        historyMissions.forEach(ensureMissionShape);
         if (!activeMissions.length) activeMissions.push(createEmptyMission(1));
         currentMissionIndex = 0;
       } catch (e) {
@@ -844,18 +1033,80 @@
       return document.getElementById(id);
     }
 
+    function generateMissionId() {
+      try {
+        if (window.crypto && crypto.randomUUID) {
+          return "m-" + crypto.randomUUID();
+        }
+      } catch (e) {}
+      return (
+        "m-" +
+        Date.now().toString(36) +
+        "-" +
+        Math.random().toString(36).slice(2, 8)
+      );
+    }
+
+    function ensureMissionShape(m) {
+      if (!m) return;
+      if (!m.id) m.id = generateMissionId();
+      if (!Array.isArray(m.stages)) {
+        const extra = [];
+        if (m.delivery2 && typeof m.delivery2 === "string" && m.delivery2.trim()) {
+          extra.push(m.delivery2.trim());
+        }
+        m.stages = extra;
+      }
+      if (typeof m.startedBy !== "string") {
+        m.startedBy = "Unknown";
+      }
+      if (!Array.isArray(m.cargo)) m.cargo = [];
+    }
+
+    function findMissionIndexById(list, id) {
+      if (!id || !Array.isArray(list)) return -1;
+      return list.findIndex((m) => m && m.id === id);
+    }
+
+    function generatePeerId() {
+      return (
+        "p-" +
+        Date.now().toString(36) +
+        "-" +
+        Math.random().toString(36).slice(2, 6)
+      );
+    }
+
+    function isUsernameAllowed(name) {
+      if (!name) return false;
+      const trimmed = name.trim();
+      if (trimmed.length < 3 || trimmed.length > 24) return false;
+      const lower = trimmed.toLowerCase();
+      return !OFFENSIVE_NAME_PARTS.some((part) => lower.includes(part));
+    }
+
     function buildRouteLabel(mission, index) {
       const name = mission.name || `Mission ${index + 1}`;
       const pickup = (mission.pickup || "").trim();
       const delivery = (mission.delivery || "").trim();
+      const extraStages = Array.isArray(mission.stages) ? mission.stages : [];
       const status = mission.status || "In Progress";
 
       const parts = [];
       if (pickup) parts.push(pickup);
       if (delivery) parts.push(delivery);
-      const route = parts.join(" → ");
+      extraStages.forEach((s) => {
+        const v = (s || "").trim();
+        if (v) parts.push(v);
+      });
+      const route = parts.join(" -> ");
 
       return { name, route, status };
+    }
+
+    function isCurrentUserAdmin() {
+      if (!syncUsername) return false;
+      return !!syncState.admins[syncUsername];
     }
 
     // ---------- RENDERING ----------
@@ -954,8 +1205,18 @@
 
       const pickup = (mission.pickup || "").trim();
       const delivery = (mission.delivery || "").trim();
+      const extraStages = Array.isArray(mission.stages) ? mission.stages : [];
       lines.push("📦 Pick Up From " + pickup);
-      lines.push("➡️ Deliver To " + delivery);
+
+      if (delivery) {
+        lines.push("➡️ Deliver To " + delivery);
+      }
+      extraStages.forEach((s) => {
+        const v = (s || "").trim();
+        if (v) {
+          lines.push("➡️ Then Deliver To " + v);
+        }
+      });
       lines.push("");
 
       for (const item of mission.cargo || []) {
@@ -972,6 +1233,9 @@
       lines.push("");
       lines.push("========================================");
       lines.push(`Status: ${mission.status || "In Progress"}`);
+      if (mission.startedBy) {
+        lines.push(`Started By: ${mission.startedBy}`);
+      }
       if (mission.notes) {
         lines.push(`Notes: ${mission.notes}`);
       }
@@ -982,9 +1246,42 @@
       if (currentMissionIndex == null || !activeMissions[currentMissionIndex]) return;
       const m = activeMissions[currentMissionIndex];
       if (getEl("mission-name")) getEl("mission-name").value = m.name || "";
+      if (getEl("mission-started-by")) {
+        const input = getEl("mission-started-by");
+        input.value = m.startedBy || "";
+        input.readOnly = !isCurrentUserAdmin();
+      }
       if (getEl("mission-pickup")) getEl("mission-pickup").value = m.pickup || "";
       if (getEl("mission-delivery")) getEl("mission-delivery").value = m.delivery || "";
       if (getEl("mission-notes")) getEl("mission-notes").value = m.notes || "";
+
+      // extra stages editor
+      const stagesContainer = document.getElementById("mission-extra-stages");
+      if (stagesContainer) {
+        stagesContainer.innerHTML = "";
+        const stages = Array.isArray(m.stages) ? m.stages : [];
+        stages.forEach((s, idx) => {
+          const row = document.createElement("div");
+          row.className = "field-row";
+
+          const field = document.createElement("div");
+          field.className = "field";
+
+          const label = document.createElement("label");
+          label.textContent = `➡️ Stage ${idx + 2}`;
+
+          const input = document.createElement("input");
+          input.type = "text";
+          input.value = s || "";
+          input.className = "mission-stage-input";
+          input.dataset.stageIndex = String(idx);
+
+          field.appendChild(label);
+          field.appendChild(input);
+          row.appendChild(field);
+          stagesContainer.appendChild(row);
+        });
+      }
 
       const tbody = getEl("cargo-table-body");
       if (!tbody) return;
@@ -1032,16 +1329,19 @@
         if (getEl("history-status")) getEl("history-status").textContent = "—";
         if (getEl("history-pickup")) getEl("history-pickup").textContent = "—";
         if (getEl("history-delivery")) getEl("history-delivery").textContent = "—";
+        if (getEl("history-delivery2")) getEl("history-delivery2").textContent = "—";
         if (getEl("history-notes")) getEl("history-notes").textContent = "—";
         if (getEl("history-manifest")) getEl("history-manifest").textContent = "";
         renderTotals();
         return;
       }
       const m = historyMissions[currentHistoryIndex];
+      const stages = Array.isArray(m.stages) ? m.stages : [];
       if (getEl("history-name")) getEl("history-name").textContent = m.name || "—";
       if (getEl("history-status")) getEl("history-status").textContent = m.status || "—";
       if (getEl("history-pickup")) getEl("history-pickup").textContent = m.pickup || "—";
       if (getEl("history-delivery")) getEl("history-delivery").textContent = m.delivery || "—";
+      if (getEl("history-delivery2")) getEl("history-delivery2").textContent = (stages[0] || "—");
       if (getEl("history-notes")) getEl("history-notes").textContent = m.notes || "—";
       if (getEl("history-manifest")) getEl("history-manifest").textContent = buildManifest(m);
       renderTotals();
@@ -1051,16 +1351,33 @@
     function saveCurrentMissionFromForm() {
       if (currentMissionIndex == null || !activeMissions[currentMissionIndex]) return;
       const m = activeMissions[currentMissionIndex];
+      if (!m.startedBy || m.startedBy === "local") {
+        m.startedBy = syncUsername || m.startedBy || "local";
+      }
       if (getEl("mission-name")) m.name = getEl("mission-name").value.trim();
       if (getEl("mission-pickup")) m.pickup = getEl("mission-pickup").value.trim();
       if (getEl("mission-delivery")) m.delivery = getEl("mission-delivery").value.trim();
+      if (getEl("mission-started-by") && isCurrentUserAdmin()) {
+        const ownerVal = getEl("mission-started-by").value.trim();
+        if (ownerVal) m.startedBy = ownerVal;
+      }
       if (getEl("mission-notes")) m.notes = getEl("mission-notes").value.trim();
+
+      // collect extra stages from dynamic inputs
+      const stages = [];
+      document.querySelectorAll(".mission-stage-input").forEach((input) => {
+        const v = input.value.trim();
+        if (v) stages.push(v);
+      });
+      m.stages = stages;
+
       if (!m.status) m.status = "In Progress";
       saveState();
       renderActiveMissionList();
       const manifestEl = getEl("manifest-text");
       if (manifestEl) manifestEl.textContent = buildManifest(m);
       renderTotals();
+      syncSend({ type: "mission_updated", mission: m });
     }
 
     // ---------- ACTIONS ----------
@@ -1089,6 +1406,9 @@
       saveState();
       renderActiveMissionList();
       renderActiveMissionDetails();
+      if (currentMissionIndex != null && activeMissions[currentMissionIndex]) {
+        syncSend({ type: "mission_started", mission: activeMissions[currentMissionIndex] });
+      }
     }
 
     function completeCurrentMission() {
@@ -1098,6 +1418,7 @@
       m.status = "Completed";
       historyMissions.push(m);
       currentHistoryIndex = historyMissions.length - 1;
+      syncSend({ type: "mission_completed", mission: m });
 
       if (!activeMissions.length) {
         activeMissions.push(createEmptyMission(1));
@@ -1122,6 +1443,7 @@
       m.status = "Cancelled";
       historyMissions.push(m);
       currentHistoryIndex = historyMissions.length - 1;
+      syncSend({ type: "mission_cancelled", mission: m });
 
       if (!activeMissions.length) {
         activeMissions.push(createEmptyMission(1));
@@ -1183,6 +1505,7 @@
       saveState();
       renderActiveMissionDetails();
       renderActiveMissionList();
+      syncSend({ type: "mission_updated", mission: m });
     }
 
     function updateCargoItem() {
@@ -1218,6 +1541,7 @@
       saveState();
       renderActiveMissionDetails();
       renderActiveMissionList();
+      syncSend({ type: "mission_updated", mission: m });
     }
 
     function removeCargoItem() {
@@ -1232,6 +1556,7 @@
       saveState();
       renderActiveMissionDetails();
       renderActiveMissionList();
+      syncSend({ type: "mission_updated", mission: m });
     }
 
     // ---------- INIT / EVENTS ----------
@@ -1276,7 +1601,7 @@
         });
       }
 
-      ["mission-name", "mission-pickup", "mission-delivery", "mission-notes"].forEach(id => {
+      ["mission-name", "mission-started-by", "mission-pickup", "mission-delivery", "mission-notes"].forEach(id => {
         const el = getEl(id);
         if (el) {
           el.addEventListener("input", () => {
@@ -1284,6 +1609,31 @@
           });
         }
       });
+
+      safeOnClick("btn-mission-add-stage", () => {
+        if (currentMissionIndex == null || !activeMissions[currentMissionIndex]) return;
+        const m = activeMissions[currentMissionIndex];
+        if (!Array.isArray(m.stages)) m.stages = [];
+        m.stages.push("");
+        renderActiveMissionDetails();
+        const lastIndex = m.stages.length - 1;
+        const lastInput = document.querySelector(
+          `.mission-stage-input[data-stage-index="${lastIndex}"]`
+        );
+        if (lastInput) {
+          lastInput.focus();
+        }
+      });
+
+      const stagesContainer = document.getElementById("mission-extra-stages");
+      if (stagesContainer) {
+        stagesContainer.addEventListener("input", (e) => {
+          const target = e.target;
+          if (target && target.classList && target.classList.contains("mission-stage-input")) {
+            saveCurrentMissionFromForm();
+          }
+        });
+      }
 
       const cargoBody = getEl("cargo-table-body");
       if (cargoBody) {
@@ -1321,6 +1671,514 @@
         if (!confirm("Clear all saved missions (active + history) from this browser?")) return;
         clearStorageCompletely();
       });
+
+      // Sync tab events
+      safeOnClick("btn-sync-save-username", () => {
+        if (ensureValidUsername()) {
+          appendSyncLog("Username set to " + syncUsername + ".");
+        }
+      });
+
+      safeOnClick("btn-sync-create-offer", () => {
+        createSyncOffer().catch((err) => {
+          console.error(err);
+          alert("Failed to create offer: " + (err && err.message ? err.message : err));
+        });
+      });
+
+      // Single "Use Code" button: detects whether the pasted code is an offer or an answer
+      safeOnClick("btn-sync-use-code", () => {
+        const raw = getEl("sync-remote-signal")?.value || "";
+        if (!raw.trim()) {
+          alert("Paste a code from your partner first.");
+          return;
+        }
+        let desc;
+        try {
+          desc = JSON.parse(raw.trim());
+        } catch (e) {
+          alert("Code is not valid JSON.");
+          return;
+        }
+        if (!desc || typeof desc !== "object" || !desc.type) {
+          alert("Code does not look like a valid WebRTC offer/answer.");
+          return;
+        }
+
+        if (desc.type === "offer") {
+          joinFromOffer().catch((err) => {
+            console.error(err);
+            alert("Failed to use offer: " + (err && err.message ? err.message : err));
+          });
+        } else if (desc.type === "answer") {
+          applyAnswerAsHost().catch((err) => {
+            console.error(err);
+            alert("Failed to use answer: " + (err && err.message ? err.message : err));
+          });
+        } else {
+          alert("Unsupported code type: " + desc.type);
+        }
+      });
+
+      // Admin controls are managed from the roster; no manual username entry
+    }
+
+    function appendSyncLog(text) {
+      const logEl = getEl("sync-log");
+      if (!logEl) return;
+      const time = new Date().toLocaleTimeString();
+      logEl.textContent += `[${time}] ${text}\n`;
+      logEl.scrollTop = logEl.scrollHeight;
+    }
+
+    function updateSyncStatusLabel() {
+      const pill = getEl("sync-status-pill");
+      if (!pill) return;
+      const openPeers = (syncState.peers || []).filter(
+        (p) => p.dc && p.dc.readyState === "open"
+      ).length;
+      syncState.isConnected = openPeers > 0;
+      pill.classList.toggle("connected", openPeers > 0);
+      pill.classList.toggle("disconnected", openPeers === 0);
+      if (!openPeers) {
+        pill.textContent = "Disconnected";
+      } else if (openPeers === 1) {
+        pill.textContent = "Connected (1)";
+      } else {
+        pill.textContent = `Connected (${openPeers})`;
+      }
+    }
+
+    function ensureValidUsername() {
+      const input = getEl("sync-username");
+      const errEl = getEl("sync-username-error");
+      if (!input) return false;
+      const name = input.value.trim();
+      let error = "";
+      if (!isUsernameAllowed(name)) {
+        error = "Choose a username 3-24 characters with no profanity.";
+      }
+      if (errEl) {
+        errEl.textContent = error;
+        errEl.style.display = error ? "block" : "none";
+      }
+      if (error) return false;
+      syncUsername = name;
+      return true;
+    }
+
+    function closeAllSyncConnections() {
+      (syncState.peers || []).forEach((p) => {
+        try {
+          if (p.dc) p.dc.close();
+        } catch (e) {}
+        try {
+          if (p.pc) p.pc.close();
+        } catch (e) {}
+      });
+      syncState.peers = [];
+      syncState.isConnected = false;
+      updateSyncStatusLabel();
+      renderRoster();
+    }
+
+    function getOpenPeers() {
+      return (syncState.peers || []).filter(
+        (p) => p.dc && p.dc.readyState === "open"
+      );
+    }
+
+    function getKnownUsernames() {
+      const set = new Set();
+      if (syncUsername) set.add(syncUsername);
+      (syncState.peers || []).forEach((p) => {
+        if (p.username) set.add(p.username);
+      });
+      return Array.from(set);
+    }
+
+    function renderRoster() {
+      const container = getEl("sync-roster");
+      if (!container) return;
+      const users = getKnownUsernames();
+      if (!users.length) {
+        container.textContent = "No players connected yet.";
+        return;
+      }
+      const isHost = syncState.role === "host";
+      const list = document.createElement("div");
+      list.style.display = "flex";
+      list.style.flexDirection = "column";
+      list.style.gap = "4px";
+
+      users.forEach((name) => {
+        const row = document.createElement("div");
+        row.style.display = "flex";
+        row.style.alignItems = "center";
+        row.style.justifyContent = "space-between";
+        row.style.fontSize = "11px";
+
+        const left = document.createElement("div");
+        left.textContent = name + (name === syncUsername ? " (you)" : "");
+
+        const right = document.createElement("div");
+        right.style.display = "flex";
+        right.style.gap = "4px";
+
+        const rolePill = document.createElement("span");
+        rolePill.className = "sync-status-pill";
+
+        const isOwner = isHost && name === syncUsername;
+        const isAdmin = syncState.admins[name];
+
+        if (isOwner) {
+          rolePill.textContent = "Owner";
+        } else if (isAdmin) {
+          rolePill.textContent = "Admin";
+        } else {
+          rolePill.textContent = "Player";
+        }
+
+        right.appendChild(rolePill);
+        row.appendChild(left);
+        row.appendChild(right);
+        list.appendChild(row);
+      });
+
+      container.innerHTML = "";
+      container.appendChild(list);
+    }
+
+    function setupDataChannel(peer, channel) {
+      peer.dc = channel;
+      channel.onopen = () => {
+        updateSyncStatusLabel();
+        appendSyncLog("Sync channel open.");
+        // share our current active missions so both sides see the union (only to this peer)
+        syncSendToPeer(peer, { type: "hello_state", missions: activeMissions });
+      };
+      channel.onclose = () => {
+        peer.dc = null;
+        updateSyncStatusLabel();
+        renderRoster();
+        appendSyncLog("Sync channel closed.");
+      };
+      channel.onerror = (ev) => {
+        appendSyncLog("Sync error.");
+        console.error("Sync error", ev);
+      };
+      channel.onmessage = (ev) => {
+        try {
+          const msg = JSON.parse(ev.data);
+          handleSyncMessage(msg, peer);
+        } catch (e) {
+          console.warn("Bad sync message", e);
+        }
+      };
+    }
+
+    function syncSendToPeer(peer, payload, preserveOrigin) {
+      if (!peer || !peer.dc || peer.dc.readyState !== "open" || syncState.isApplyingRemote) return;
+      const msg = preserveOrigin
+        ? payload
+        : {
+            v: 1,
+            sender: syncUsername || "anon",
+            originId: syncNodeId,
+            timestamp: Date.now(),
+            ...payload,
+          };
+      try {
+        peer.dc.send(JSON.stringify(msg));
+      } catch (e) {
+        console.warn("sync send failed", e);
+      }
+    }
+
+    function syncSend(payload) {
+      if (syncState.isApplyingRemote) return;
+      const peers = getOpenPeers();
+      if (!peers.length) return;
+      const msg = {
+        v: 1,
+        sender: syncUsername || "anon",
+        originId: syncNodeId,
+        timestamp: Date.now(),
+        ...payload,
+      };
+      const json = JSON.stringify(msg);
+      peers.forEach((peer) => {
+        try {
+          peer.dc.send(json);
+        } catch (e) {
+          console.warn("sync send failed", e);
+        }
+      });
+    }
+
+    function handleSyncMessage(msg, fromPeer) {
+      if (!msg || typeof msg !== "object") return;
+      if (msg.originId && msg.originId === syncNodeId) return;
+      const sender = msg.sender || "Partner";
+
+      // track remote usernames for roster
+      if (fromPeer && msg.sender && !fromPeer.username) {
+        fromPeer.username = msg.sender;
+        renderRoster();
+      }
+
+      syncState.isApplyingRemote = true;
+      try {
+        if (msg.type === "hello_state" && Array.isArray(msg.missions)) {
+          let added = 0;
+          msg.missions.forEach((m) => {
+            ensureMissionShape(m);
+            if (!m.startedBy || m.startedBy === "Unknown") {
+              m.startedBy = sender;
+            }
+            const existingActive = findMissionIndexById(activeMissions, m.id);
+            const existingHistory = findMissionIndexById(historyMissions, m.id);
+            if (existingActive === -1 && existingHistory === -1) {
+              activeMissions.push(m);
+              added++;
+            }
+          });
+          if (added > 0) {
+            saveState();
+            renderActiveMissionList();
+            renderActiveMissionDetails();
+            appendSyncLog(`${sender} shared ${added} active mission(s).`);
+          }
+        } else if (msg.type === "mission_started" && msg.mission) {
+          const m = msg.mission;
+          ensureMissionShape(m);
+          if (!m.startedBy || m.startedBy === "Unknown") {
+            m.startedBy = sender;
+          }
+          const existingActive = findMissionIndexById(activeMissions, m.id);
+          const existingHistory = findMissionIndexById(historyMissions, m.id);
+          if (existingActive === -1 && existingHistory === -1) {
+            activeMissions.push(m);
+            saveState();
+            renderActiveMissionList();
+            appendSyncLog(`${sender} started mission "${m.name || m.id}".`);
+          }
+        } else if (msg.type === "mission_updated" && msg.mission) {
+          const m = msg.mission;
+          ensureMissionShape(m);
+          if (!m.startedBy || m.startedBy === "Unknown") {
+            m.startedBy = sender;
+          }
+          let idx = findMissionIndexById(activeMissions, m.id);
+          if (idx !== -1) {
+            activeMissions[idx] = m;
+            saveState();
+            renderActiveMissionList();
+            if (idx === currentMissionIndex) {
+              renderActiveMissionDetails();
+            }
+            appendSyncLog(`${sender} updated mission "${m.name || m.id}".`);
+          } else {
+            idx = findMissionIndexById(historyMissions, m.id);
+            if (idx !== -1) {
+              historyMissions[idx] = m;
+              saveState();
+              renderHistoryMissionList();
+              if (idx === currentHistoryIndex) {
+                renderHistoryDetails();
+              }
+              appendSyncLog(`${sender} updated completed mission "${m.name || m.id}".`);
+            }
+          }
+        } else if (
+          (msg.type === "mission_completed" || msg.type === "mission_cancelled") &&
+          msg.mission
+        ) {
+          const m = msg.mission;
+          ensureMissionShape(m);
+          if (!m.startedBy || m.startedBy === "Unknown") {
+            m.startedBy = sender;
+          }
+          const finalStatus = msg.type === "mission_completed" ? "Completed" : "Cancelled";
+          m.status = finalStatus;
+
+          let aIdx = findMissionIndexById(activeMissions, m.id);
+          if (aIdx !== -1) {
+            activeMissions.splice(aIdx, 1);
+            if (!activeMissions.length) {
+              activeMissions.push(createEmptyMission(1));
+              currentMissionIndex = 0;
+            } else if (currentMissionIndex >= activeMissions.length) {
+              currentMissionIndex = activeMissions.length - 1;
+            }
+          }
+
+          let hIdx = findMissionIndexById(historyMissions, m.id);
+          if (hIdx === -1) {
+            historyMissions.push(m);
+            currentHistoryIndex = historyMissions.length - 1;
+          } else {
+            historyMissions[hIdx] = m;
+            currentHistoryIndex = hIdx;
+          }
+
+          saveState();
+          renderActiveMissionList();
+          renderHistoryMissionList();
+          renderActiveMissionDetails();
+          renderHistoryDetails();
+
+          appendSyncLog(
+            `${sender} ${finalStatus === "Completed" ? "completed" : "cancelled"} mission "${
+              m.name || m.id
+            }".`
+          );
+        } else if (msg.type === "admin_set" && typeof msg.username === "string") {
+          // Only trust admin changes from the host; guests just apply them locally
+          if (syncState.role === "host") {
+            // ignore remote attempts to change admins
+          } else {
+            syncState.admins[msg.username] = !!msg.isAdmin;
+            renderAdminList();
+            appendSyncLog(
+              `${sender} ${msg.isAdmin ? "granted" : "revoked"} admin for ${msg.username}.`
+            );
+          }
+        }
+      } finally {
+        syncState.isApplyingRemote = false;
+      }
+
+      // Host fans out mission changes from one peer to all others
+      if (
+        syncState.role === "host" &&
+        fromPeer &&
+        (msg.type === "mission_started" ||
+          msg.type === "mission_updated" ||
+          msg.type === "mission_completed" ||
+          msg.type === "mission_cancelled")
+      ) {
+        const peers = getOpenPeers();
+        peers.forEach((peer) => {
+          if (peer !== fromPeer) {
+            syncSendToPeer(peer, msg, true);
+          }
+        });
+      }
+    }
+
+    async function createSyncOffer() {
+      if (!ensureValidUsername()) return;
+      if (syncState.role === "guest") {
+        alert("You are connected as a guest. Refresh the page to become a host.");
+        return;
+      }
+      if (getOpenPeers().length >= SYNC_MAX_PEERS) {
+        alert("Maximum sync peers reached.");
+        return;
+      }
+      syncState.role = "host";
+      const pc = new RTCPeerConnection();
+      const peer = { id: generatePeerId(), pc, dc: null, isHostSide: true };
+      syncState.peers.push(peer);
+      const dc = pc.createDataChannel("missions");
+      setupDataChannel(peer, dc);
+      appendSyncLog("Creating offer...");
+      pc.onicecandidate = (event) => {
+        if (!event.candidate) {
+          const desc = pc.localDescription;
+          const out = getEl("sync-local-signal");
+          if (out && desc) {
+            const txt = JSON.stringify(desc);
+            out.value = txt;
+            try {
+              navigator.clipboard.writeText(txt);
+              appendSyncLog("Copied your offer code to clipboard.");
+            } catch (e) {
+              // clipboard might be blocked; ignore
+            }
+          }
+        }
+      };
+      const offer = await pc.createOffer();
+      await pc.setLocalDescription(offer);
+    }
+
+    async function joinFromOffer() {
+      if (!ensureValidUsername()) return;
+      // guest connects to a single host
+      closeAllSyncConnections();
+      syncState.role = "guest";
+      const raw = getEl("sync-remote-signal")?.value || "";
+      if (!raw.trim()) {
+        alert("Paste your partner's offer code first.");
+        return;
+      }
+      let remoteDesc;
+      try {
+        remoteDesc = JSON.parse(raw.trim());
+      } catch (e) {
+        alert("Partner offer code is not valid JSON.");
+        return;
+      }
+      const pc = new RTCPeerConnection();
+      const peer = { id: generatePeerId(), pc, dc: null, isHostSide: false };
+      syncState.peers.push(peer);
+      pc.ondatachannel = (ev) => {
+        setupDataChannel(peer, ev.channel);
+      };
+      pc.onicecandidate = (event) => {
+        if (!event.candidate) {
+          const desc = pc.localDescription;
+          const out = getEl("sync-local-signal");
+          if (out && desc) {
+            const txt = JSON.stringify(desc);
+            out.value = txt;
+            try {
+              navigator.clipboard.writeText(txt);
+              appendSyncLog("Copied your answer code to clipboard.");
+            } catch (e) {
+              // ignore clipboard errors
+            }
+          }
+        }
+      };
+      await pc.setRemoteDescription(remoteDesc);
+      const answer = await pc.createAnswer();
+      await pc.setLocalDescription(answer);
+      appendSyncLog("Created answer; send your code back to your partner.");
+    }
+
+    function findPendingHostPeerForAnswer() {
+      return (syncState.peers || []).find((p) => {
+        return p.pc && p.pc.signalingState === "have-local-offer";
+      });
+    }
+
+    async function applyAnswerAsHost() {
+      if (syncState.role !== "host") {
+        alert("Only the host can apply an answer code.");
+        return;
+      }
+      const peer = findPendingHostPeerForAnswer();
+      if (!peer || !peer.pc) {
+        alert("Create an offer first, then paste your partner's answer.");
+        return;
+      }
+      const raw = getEl("sync-remote-signal")?.value || "";
+      if (!raw.trim()) {
+        alert("Paste your partner's answer first.");
+        return;
+      }
+      let remoteDesc;
+      try {
+        remoteDesc = JSON.parse(raw.trim());
+      } catch (e) {
+        alert("Partner answer is not valid JSON.");
+        return;
+      }
+      await syncState.pc.setRemoteDescription(remoteDesc);
+      appendSyncLog("Applied partner answer. Waiting for sync channel to open...");
     }
 
     function init() {
@@ -1332,6 +2190,8 @@
       renderActiveMissionDetails();
       renderHistoryDetails();
       renderTotals();
+      updateSyncStatusLabel();
+      renderRoster();
     }
 
     window.addEventListener("DOMContentLoaded", init);
