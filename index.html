@@ -1110,6 +1110,8 @@
 
     function isCurrentUserAdmin() {
       if (!syncUsername) return false;
+      // Owner (host) is always allowed to act as admin
+      if (syncState.role === "host") return true;
       return !!syncState.admins[syncUsername];
     }
 
@@ -1832,7 +1834,7 @@
         rolePill.className = "sync-status-pill";
 
         const isOwner = isHost && name === syncUsername;
-        const isAdmin = syncState.admins[name];
+        const isAdmin = !!syncState.admins[name];
 
         if (isOwner) {
           rolePill.textContent = "Owner";
@@ -1843,6 +1845,42 @@
         }
 
         right.appendChild(rolePill);
+
+        if (isHost && name !== syncUsername) {
+          const btnToggle = document.createElement("button");
+          btnToggle.textContent = isAdmin ? "Demote" : "Promote";
+          btnToggle.className = "btn btn-sm";
+          btnToggle.style.fontSize = "10px";
+          btnToggle.addEventListener("click", () => {
+            const nowAdmin = !syncState.admins[name];
+            syncState.admins[name] = nowAdmin;
+            renderRoster();
+            syncSend({ type: "admin_set", username: name, isAdmin: nowAdmin });
+          });
+          right.appendChild(btnToggle);
+
+          const btnKick = document.createElement("button");
+          btnKick.textContent = "Kick";
+          btnKick.className = "btn btn-sm btn-danger";
+          btnKick.style.fontSize = "10px";
+          btnKick.addEventListener("click", () => {
+            if (!confirm(`Disconnect ${name} from this session?`)) return;
+            (syncState.peers || []).forEach((p) => {
+              if (p.username === name) {
+                try { if (p.dc) p.dc.close(); } catch (e) {}
+                try { if (p.pc) p.pc.close(); } catch (e) {}
+              }
+            });
+            // remove peers with that username
+            syncState.peers = (syncState.peers || []).filter((p) => p.username !== name);
+            delete syncState.admins[name];
+            updateSyncStatusLabel();
+            renderRoster();
+            appendSyncLog(`Kicked ${name} from session.`);
+          });
+          right.appendChild(btnKick);
+        }
+
         row.appendChild(left);
         row.appendChild(right);
         list.appendChild(row);
@@ -2037,12 +2075,10 @@
             }".`
           );
         } else if (msg.type === "admin_set" && typeof msg.username === "string") {
-          // Only trust admin changes from the host; guests just apply them locally
-          if (syncState.role === "host") {
-            // ignore remote attempts to change admins
-          } else {
+          // Only apply admin changes coming from the host; guests update their local view
+          if (syncState.role !== "host") {
             syncState.admins[msg.username] = !!msg.isAdmin;
-            renderAdminList();
+            renderRoster();
             appendSyncLog(
               `${sender} ${msg.isAdmin ? "granted" : "revoked"} admin for ${msg.username}.`
             );
