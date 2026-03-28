@@ -1,2334 +1,665 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <title>Chloe's Delivery Manifesto 📨</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Classpect Randomizer</title>
   <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
     :root {
-      --bg: #050811;
-      --panel: #0b1018;
-      --panel-alt: #111722;
-      --text: #e0e8ff;
-      --muted: #7a8aa5;
-      --accent: #00aeef;
-      --border: #1b2538;
-      --danger: #ff4b6b;
-      --font-main: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      --bg:      #0e0e14;
+      --surface: #181825;
+      --border:  #2a2a3a;
+      --accent:  #9b59b6;
+      --text:    #cdd6f4;
+      --muted:   #6c7086;
+      --purple:  #cba6f7;
+      --error:   #f38ba8;
     }
 
-    * { box-sizing: border-box; }
-
-    body {
-      margin: 0;
-      padding: 0;
-      background: radial-gradient(circle at top, #141c33 0, #050811 55%);
-      color: var(--text);
-      font-family: var(--font-main);
-    }
-
-    .app {
-      height: 100vh;
-      display: flex;
-      flex-direction: column;
-    }
-
-    header {
-      padding: 10px 16px;
-      border-bottom: 1px solid var(--border);
-      background: linear-gradient(90deg, #050811, #111722);
+    /* ── Upload row ── */
+    .upload-row {
       display: flex;
       align-items: center;
-      justify-content: space-between;
-      font-size: 14px;
-      letter-spacing: 0.05em;
+      gap: 0.5rem;
+      margin-top: 0.6rem;
+    }
+
+    .btn-upload {
+      font-family: inherit;
+      font-size: 0.7rem;
+      letter-spacing: 1px;
       text-transform: uppercase;
-    }
-
-    header .title {
-      display: flex;
-      align-items: baseline;
-      gap: 8px;
-    }
-
-    header .title span.subtitle {
-      font-size: 11px;
-      color: var(--muted);
-      text-transform: none;
-      letter-spacing: 0.02em;
-    }
-
-    .tabs {
-      display: flex;
-      background: #050811;
-      border-bottom: 1px solid var(--border);
-      padding: 0 12px;
-      gap: 4px;
-    }
-
-    .tab-btn {
-      border: none;
+      padding: 0.28rem 0.7rem;
       background: transparent;
-      color: var(--muted);
-      padding: 8px 12px;
-      cursor: pointer;
-      font-size: 13px;
-      border-radius: 6px 6px 0 0;
-      display: flex;
-      align-items: center;
-      gap: 6px;
-    }
-
-    .tab-btn.active {
-      background: var(--panel);
-      color: var(--text);
-      border-bottom: 2px solid var(--accent);
-    }
-
-    .tab-btn:hover {
-      color: var(--text);
-    }
-
-    .main {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      overflow: hidden;
-    }
-
-    .tab-content {
-      display: none;
-      height: 100%;
-    }
-
-    .tab-content.active {
-      display: flex;
-      height: 100%;
-    }
-
-    .columns {
-      display: flex;
-      flex: 1;
-      overflow: hidden;
-    }
-
-    .left-panel {
-      width: 260px;
-      min-width: 240px;
-      border-right: 1px solid var(--border);
-      padding: 10px;
-      background: rgba(0,0,0,0.15);
-      display: flex;
-      flex-direction: column;
-    }
-
-    .panel-title {
-      font-size: 12px;
-      text-transform: uppercase;
-      letter-spacing: 0.12em;
-      color: var(--muted);
-      margin-bottom: 6px;
-    }
-
-    .summary-line {
-      font-size: 11px;
-      color: var(--muted);
-      margin: 6px 2px 4px 2px;
-    }
-
-    .summary-line span.value {
-      color: var(--accent);
-      font-weight: 500;
-      margin-left: 4px;
-    }
-
-    .mission-list {
-      flex: 1;
-      background: var(--panel);
-      border-radius: 8px;
-      padding: 4px;
-      overflow-y: auto;
       border: 1px solid var(--border);
-      font-size: 12px;
-    }
-
-    .mission-item {
-      padding: 6px 8px;
-      border-radius: 6px;
+      border-radius: 5px;
+      color: var(--muted);
       cursor: pointer;
-      margin-bottom: 2px;
-      display: flex;
-      flex-direction: column;
-      gap: 2px;
+      transition: all 0.15s;
+      flex-shrink: 0;
     }
+    .btn-upload:hover { color: var(--purple); border-color: var(--accent); }
 
-    .mission-item:hover { background: #151e32; }
-
-    .mission-item.active {
-      background: #12263a;
-      border: 1px solid var(--accent);
-    }
-
-    .mission-name {
-      font-weight: 500;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 4px;
-    }
-
-    .mission-status {
-      font-size: 10px;
+    .upload-filename {
+      font-size: 0.72rem;
       color: var(--muted);
-      text-transform: uppercase;
-      letter-spacing: 0.1em;
-    }
-
-    .mission-worth {
-      font-size: 11px;
-      color: var(--accent);
-    }
-
-    .mission-route {
-      font-size: 11px;
-      color: var(--muted);
-      white-space: nowrap;
-      text-overflow: ellipsis;
       overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
     }
 
-    .mission-started-by {
-      font-size: 10px;
-      color: var(--muted);
-      text-align: right;
-      margin-top: 2px;
-    }
-
-    .left-buttons {
-      margin-top: 8px;
+    /* ── Count input ── */
+    .count-row {
       display: flex;
-      flex-direction: column;
-      gap: 6px;
+      align-items: center;
+      gap: 0.6rem;
+      font-size: 0.8rem;
+      color: var(--muted);
     }
 
-    .btn {
-      border: none;
+    input[type="number"] {
+      background: var(--surface);
+      border: 1px solid var(--border);
       border-radius: 6px;
-      padding: 6px 10px;
-      font-size: 12px;
-      cursor: pointer;
-      background: #151e32;
       color: var(--text);
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
+      font-family: inherit;
+      font-size: 0.88rem;
+      padding: 0.3rem 0.5rem;
+      width: 62px;
+      text-align: center;
+      transition: border-color 0.15s;
+      -moz-appearance: textfield;
+    }
+    input[type="number"]::-webkit-outer-spin-button,
+    input[type="number"]::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+    input[type="number"]:focus { outline: none; border-color: var(--accent); }
+
+    /* ── Multi-result grid ── */
+    .result-grid {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
       justify-content: center;
     }
 
-    .btn-accent {
-      background: linear-gradient(90deg, #0088d6, #00aeef);
+    .result-pill {
+      background: var(--bg);
+      border: 1px solid var(--accent);
+      border-radius: 6px;
+      padding: 0.4rem 0.9rem;
+      font-size: 1rem;
+      font-weight: bold;
+      color: var(--purple);
+      letter-spacing: 0.5px;
     }
 
-    .btn-accent:hover { filter: brightness(1.05); }
-
-    .btn-danger {
-      background: rgba(255, 75, 107, 0.18);
-      color: #ff9bb0;
-    }
-
-    .btn-sm {
-      font-size: 11px;
-      padding: 4px 8px;
-    }
-
-    .btn:hover { background: #1e2940; }
-
-    .right-panel {
-      flex: 1;
-      padding: 10px;
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-      overflow: hidden;
-    }
-
-    .card {
-      background: var(--panel);
-      border-radius: 8px;
-      padding: 8px 10px;
-      border: 1px solid var(--border);
-    }
-
-    .card-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 6px;
-      font-size: 13px;
-    }
-
-    .card-header span.label {
-      text-transform: uppercase;
-      letter-spacing: 0.12em;
-      color: var(--muted);
-      font-size: 11px;
-    }
-
-    .card-header .smiley {
-      color: var(--accent);
-      font-size: 16px;
-    }
-
-    .field-row {
-      display: flex;
-      gap: 8px;
-      margin-bottom: 4px;
-    }
-
-    .field {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      gap: 2px;
-      font-size: 12px;
-    }
-
-    .field label {
-      font-size: 11px;
-      color: var(--muted);
-    }
-
-    .field input,
-    .field select,
-    .field textarea {
-      background: #050915;
-      border: 1px solid var(--border);
-      border-radius: 4px;
-      padding: 4px 6px;
+    body {
+      background: var(--bg);
       color: var(--text);
-      font-family: inherit;
-      font-size: 12px;
-    }
-
-    .field textarea {
-      resize: vertical;
-      min-height: 40px;
-      max-height: 100px;
-    }
-
-    .field input:focus,
-    .field textarea:focus,
-    .field select:focus {
-      outline: 1px solid var(--accent);
-      border-color: var(--accent);
-    }
-
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      font-size: 12px;
-    }
-
-    thead { background: #111722; }
-
-    th, td {
-      padding: 4px 6px;
-      text-align: left;
-      border-bottom: 1px solid #131c2a;
-    }
-
-    tbody tr:nth-child(odd) { background: #0b1018; }
-    tbody tr:nth-child(even) { background: #111722; }
-
-    tbody tr.active { outline: 1px solid var(--accent); }
-
-    .cargo-editor {
-      margin-top: 6px;
+      font-family: 'Courier New', Courier, monospace;
+      min-height: 100vh;
       display: flex;
-      align-items: flex-end;
-      gap: 8px;
+      flex-direction: column;
+      align-items: center;
+      padding: 2.5rem 1rem 4rem;
+      gap: 1.5rem;
+    }
+
+    /* ── Header ── */
+    header { text-align: center; }
+
+    h1 {
+      font-size: 2.2rem;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      color: var(--purple);
+      text-shadow: 0 0 35px #7b2d8b55;
+    }
+
+    .subtitle {
+      color: var(--muted);
+      font-size: 0.78rem;
+      letter-spacing: 2px;
+      margin-top: 0.35rem;
+    }
+
+    /* ── Lists ── */
+    .lists-row {
+      display: flex;
+      gap: 1rem;
+      width: 100%;
+      max-width: 760px;
       flex-wrap: wrap;
     }
 
-    .cargo-editor .field { min-width: 80px; }
-
-    .cargo-editor-buttons {
-      display: flex;
-      flex-direction: column;
-      gap: 4px;
-    }
-
-    .manifest {
-      font-family: "Consolas", "SF Mono", Menlo, Monaco, monospace;
-      font-size: 12px;
-      background: #050915;
-      border-radius: 6px;
-      padding: 8px;
-      border: 1px solid #1b2538;
-      white-space: pre-wrap;
-      max-height: 150px;
-      overflow-y: auto;
-    }
-
-    .history-layout {
-      display: flex;
+    .list-card {
       flex: 1;
-      overflow: hidden;
+      min-width: 220px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 1rem;
     }
 
-    .history-right-panel {
-      flex: 1;
-      padding: 10px;
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-      overflow: hidden;
+    .card-title {
+      font-size: 0.72rem;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      color: var(--purple);
+      margin-bottom: 0.6rem;
     }
 
-    .read-only-value {
-      font-size: 13px;
-      color: var(--text);
-    }
-
-    .read-only-label {
-      font-size: 11px;
-      color: var(--muted);
-      margin-bottom: 2px;
-    }
-
-    .readonly-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-      gap: 8px;
-    }
-
-    .settings-panel {
-      flex: 1;
-      display: flex;
-      justify-content: center;
-      align-items: flex-start;
-      padding: 20px;
-    }
-
-    .settings-inner {
-      max-width: 480px;
+    textarea {
       width: 100%;
-    }
-
-    .settings-row {
-      margin-top: 10px;
-      display: flex;
-      gap: 8px;
-      align-items: center;
-      justify-content: flex-start;
-    }
-
-    .settings-note {
-      font-size: 11px;
-      color: var(--muted);
-      margin-top: 4px;
-    }
-
-    .sync-layout {
-      display: flex;
-      flex: 1;
-      overflow: hidden;
-    }
-
-    .sync-status-pill {
-      font-size: 11px;
-      padding: 2px 6px;
-      border-radius: 999px;
-      background: #151e32;
-      color: var(--muted);
-    }
-
-    .sync-status-pill.connected {
-      color: #42f59b;
-      background: rgba(66, 245, 155, 0.12);
-    }
-
-    .sync-status-pill.disconnected {
-      color: var(--muted);
-      background: #151e32;
-    }
-
-    .sync-log {
-      font-family: "Consolas", "SF Mono", Menlo, Monaco, monospace;
-      font-size: 11px;
-      background: #050915;
+      background: var(--bg);
+      border: 1px solid var(--border);
       border-radius: 6px;
-      border: 1px solid #1b2538;
-      padding: 6px;
+      color: var(--text);
+      font-family: inherit;
+      font-size: 0.85rem;
+      padding: 0.6rem;
+      resize: vertical;
+      min-height: 210px;
+      line-height: 1.75;
+      transition: border-color 0.15s;
+    }
+
+    textarea:focus { outline: none; border-color: var(--accent); }
+
+    /* ── Connector ── */
+    .connector-row {
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      font-size: 0.8rem;
+      color: var(--muted);
+    }
+
+    .connector-row code {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 0.15rem 0.4rem;
+      font-size: 0.78rem;
+      color: var(--purple);
+    }
+
+    .connector-row input {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      color: var(--text);
+      font-family: inherit;
+      font-size: 0.88rem;
+      padding: 0.3rem 0.6rem;
+      width: 80px;
+      text-align: center;
+      transition: border-color 0.15s;
+    }
+
+    .connector-row input:focus { outline: none; border-color: var(--accent); }
+
+    /* ── Buttons ── */
+    .btn-row { display: flex; gap: 0.75rem; }
+
+    button {
+      font-family: inherit;
+      font-size: 0.88rem;
+      font-weight: bold;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      padding: 0.7rem 1.75rem;
+      border: none;
+      border-radius: 7px;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .btn-generate { background: var(--accent); color: #fff; }
+    .btn-generate:hover { background: #b06adf; box-shadow: 0 0 22px #7b2d8b55; }
+    .btn-generate:active { transform: scale(0.96); }
+    .btn-generate:disabled {
+      background: #2e2e3e;
+      color: var(--muted);
+      cursor: not-allowed;
+      box-shadow: none;
+    }
+
+    .btn-reset {
+      background: transparent;
+      color: var(--muted);
+      border: 1px solid var(--border);
+    }
+    .btn-reset:hover { color: var(--error); border-color: #553333; }
+    .btn-reset:disabled { opacity: 0.4; cursor: not-allowed; }
+
+    /* ── Result ── */
+    .result-card {
+      width: 100%;
+      max-width: 760px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 2rem 1.5rem;
+      text-align: center;
+    }
+
+    .result-label {
+      font-size: 0.72rem;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      color: var(--muted);
+      margin-bottom: 0.75rem;
+    }
+
+    #result {
+      font-size: 1.9rem;
+      font-weight: bold;
+      color: var(--purple);
+      text-shadow: 0 0 25px #7b2d8b44;
+      letter-spacing: 1px;
+      min-height: 2.6rem;
+    }
+
+    #result.placeholder { color: #35354a; font-weight: normal; font-size: 1rem; }
+    #result.error       { color: var(--error); font-weight: normal; font-size: 1rem; }
+
+    .stats {
+      display: flex;
+      gap: 2rem;
+      justify-content: center;
+      margin-top: 1.25rem;
+      font-size: 0.78rem;
+      color: var(--muted);
+      flex-wrap: wrap;
+    }
+
+    .stats strong { color: var(--text); }
+
+    /* ── History ── */
+    .history-card {
+      width: 100%;
+      max-width: 760px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 1rem 1.25rem;
+    }
+
+    .history-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 0.75rem;
+    }
+
+    .history-title {
+      font-size: 0.72rem;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      color: var(--muted);
+    }
+
+    .history-count {
+      font-size: 0.72rem;
+      color: var(--muted);
+    }
+
+    .history-grid {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.4rem;
       max-height: 160px;
       overflow-y: auto;
-      white-space: pre-wrap;
+      padding-right: 4px;
     }
 
-    .sync-textarea {
-      width: 100%;
-      min-height: 80px;
-      max-height: 140px;
-      resize: vertical;
-      background: #050915;
-      border-radius: 4px;
+    .history-grid::-webkit-scrollbar { width: 4px; }
+    .history-grid::-webkit-scrollbar-track { background: transparent; }
+    .history-grid::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+    .history-tag {
+      background: var(--bg);
       border: 1px solid var(--border);
-      padding: 4px 6px;
-      color: var(--text);
-      font-family: "Consolas", "SF Mono", Menlo, Monaco, monospace;
-      font-size: 11px;
+      border-radius: 4px;
+      padding: 0.2rem 0.55rem;
+      font-size: 0.78rem;
+      color: #a6adc8;
     }
 
-    .field label.inline-label {
-      display: flex;
-      align-items: center;
-      gap: 6px;
+    .history-placeholder {
+      color: #35354a;
+      font-size: 0.82rem;
+      font-style: italic;
     }
 
-    .field label.inline-label input[type="checkbox"] {
-      margin: 0;
+    /* ── Animations ── */
+    @keyframes pop {
+      0%   { transform: scale(0.88); opacity: 0; }
+      60%  { transform: scale(1.04); }
+      100% { transform: scale(1);    opacity: 1; }
     }
+    .pop { animation: pop 0.22s ease-out forwards; }
+
+    @keyframes fadein {
+      from { opacity: 0; transform: translateY(5px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    /* 'both' fill-mode keeps opacity:0 during the stagger delay */
+    .fadein { animation: fadein 0.2s ease-out both; }
   </style>
 </head>
 <body>
-  <div class="app">
-    <header>
-      <div class="title">
-        <span>Chloe's Delivery Manifesto 📨</span>
-        <span class="subtitle">Star Citizen Cargo Run Tracker - By using this site you agree to the use of cookies</span>
-      </div>
-    </header>
 
-    <div class="tabs">
-      <button class="tab-btn active" data-tab="active">
-        <span>Active Missions</span> <span>🚀</span>
-      </button>
-      <button class="tab-btn" data-tab="history">
-        <span>History</span> <span>📦</span>
-      </button>
-      <button class="tab-btn" data-tab="sync">
-        <span>Sync</span> <span>📡</span>
-      </button>
-      <button class="tab-btn" data-tab="settings">
-        <span>Settings</span> <span>⚙️</span>
-      </button>
-    </div>
+<header>
+  <h1>Classpect Randomizer</h1>
+  <p class="subtitle">no repeats &middot; persists between sessions</p>
+</header>
 
-    <div class="main">
-      <!-- ACTIVE TAB -->
-      <div class="tab-content active" id="tab-active">
-        <div class="columns">
-          <div class="left-panel">
-            <div class="panel-title">Missions</div>
-            <div id="active-mission-list" class="mission-list"></div>
-
-            <div class="summary-line">
-              Total Potential:
-              <span id="active-total-earnings" class="value">0</span>
-            </div>
-
-            <div class="left-buttons">
-              <button id="btn-new-mission" class="btn btn-accent">
-                ➕ New Mission
-              </button>
-              <button id="btn-complete-mission" class="btn">
-                ✅ Complete
-              </button>
-              <button id="btn-cancel-mission" class="btn btn-danger">
-                ✖ Cancel
-              </button>
-            </div>
-          </div>
-
-          <div class="right-panel">
-            <!-- Mission details -->
-            <div class="card">
-              <div class="card-header">
-                <span class="label">Mission Details</span>
-                <span class="smiley">:)</span>
-              </div>
-
-              <div class="field-row">
-                <div class="field">
-                  <label>Mission Name</label>
-                  <input id="mission-name" type="text" />
-                </div>
-              </div>
-
-              <div class="field-row">
-                <div class="field">
-                  <label>Started By</label>
-                  <input id="mission-started-by" type="text" placeholder="Auto-set when created" />
-                </div>
-              </div>
-
-              <div class="field-row">
-                <div class="field">
-                  <label>📦 Pick Up From</label>
-                  <input id="mission-pickup" type="text" />
-                </div>
-                <div class="field">
-                  <label class="inline-label">
-                    <span>➡️ Deliver To</span>
-                    <button id="btn-mission-add-stage" type="button" class="btn btn-sm">+ Stage</button>
-                  </label>
-                  <input id="mission-delivery" type="text" />
-                </div>
-              </div>
-
-              <div id="mission-extra-stages"></div>
-
-              <div class="field">
-                <label>Notes</label>
-                <input id="mission-notes" type="text" placeholder="Ship, route, timing, etc." />
-              </div>
-            </div>
-
-            <!-- Cargo & manifest -->
-            <div class="card" style="flex: 1; display:flex; flex-direction:column; gap:8px; overflow:hidden;">
-              <div class="card-header">
-                <span class="label">Cargo Items 📦</span>
-              </div>
-
-              <div style="flex:1;min-height:0;overflow:hidden;display:flex;flex-direction:column;gap:6px;">
-                <div style="flex:1;min-height:0;overflow:auto;">
-                  <table>
-                    <thead>
-                      <tr>
-                        <th style="width:40px;">Qty</th>
-                        <th>Item</th>
-                        <th style="width:90px;">Size</th>
-                        <th style="width:120px;">Destination</th>
-                        <th style="width:90px;">Value</th>
-                      </tr>
-                    </thead>
-                    <tbody id="cargo-table-body"></tbody>
-                  </table>
-                </div>
-
-                <div class="cargo-editor">
-                  <div class="field" style="max-width:70px;">
-                    <label>Qty</label>
-                    <input id="cargo-qty" type="number" min="1" />
-                  </div>
-                  <div class="field" style="min-width:160px;">
-                    <label>Item</label>
-                    <input id="cargo-name" type="text" />
-                  </div>
-                  <div class="field" style="max-width:110px;">
-                    <label>Size</label>
-                    <select id="cargo-size">
-                      <option value="EX.Small">EX.Small</option>
-                      <option value="Small">Small</option>
-                      <option value="Medium">Medium</option>
-                      <option value="Large">Large</option>
-                    </select>
-                  </div>
-                  <div class="field" style="max-width:150px;">
-                    <label>Destination</label>
-                    <select id="cargo-destination"></select>
-                  </div>
-                  <div class="field" style="max-width:120px;">
-                    <label>Value</label>
-                    <input id="cargo-value" type="text" placeholder="50k" />
-                  </div>
-                  <div class="cargo-editor-buttons">
-                    <button id="btn-add-cargo" class="btn btn-sm btn-accent">Add</button>
-                    <button id="btn-update-cargo" class="btn btn-sm">Update</button>
-                    <button id="btn-remove-cargo" class="btn btn-sm btn-danger">Remove</button>
-                  </div>
-                </div>
-
-                <div>
-                  <div class="card-header" style="margin-bottom:4px;">
-                    <span class="label">Formatted Manifest</span>
-                    <span style="font-size:11px;color:var(--muted);">read-only</span>
-                  </div>
-                  <div id="manifest-text" class="manifest"></div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- HISTORY TAB -->
-      <div class="tab-content" id="tab-history">
-        <div class="history-layout">
-          <div class="left-panel">
-            <div class="panel-title">History</div>
-            <div id="history-mission-list" class="mission-list"></div>
-
-            <div class="summary-line">
-              Total Earned:
-              <span id="history-total-earned" class="value">0</span>
-            </div>
-
-            <div class="left-buttons">
-              <button id="btn-delete-history-side" class="btn btn-danger btn-sm">
-                Delete Selected
-              </button>
-            </div>
-          </div>
-
-          <div class="history-right-panel">
-            <div class="card">
-              <div class="card-header">
-                <span class="label">Mission Summary</span>
-                <div style="display:flex;align-items:center;gap:6px;font-size:11px;color:var(--muted);">
-                  <span>Read-only</span>
-                  <button id="btn-delete-history-detail" class="btn btn-sm btn-danger">
-                    Delete
-                  </button>
-                </div>
-              </div>
-              <div class="readonly-grid">
-                <div>
-                  <div class="read-only-label">Mission Name</div>
-                  <div id="history-name" class="read-only-value">—</div>
-                </div>
-                <div>
-                  <div class="read-only-label">Status</div>
-                  <div id="history-status" class="read-only-value">—</div>
-                </div>
-                <div>
-                  <div class="read-only-label">📦 Pick Up From</div>
-                  <div id="history-pickup" class="read-only-value">—</div>
-                </div>
-                <div>
-                  <div class="read-only-label">➡️ Deliver To</div>
-                  <div id="history-delivery" class="read-only-value">—</div>
-                </div>
-                <div>
-                  <div class="read-only-label">➡️ Second Delivery</div>
-                  <div id="history-delivery2" class="read-only-value">—</div>
-                </div>
-              </div>
-              <div style="margin-top:6px;">
-                <div class="read-only-label">Notes</div>
-                <div id="history-notes" class="read-only-value">—</div>
-              </div>
-            </div>
-
-            <div class="card" style="flex:1;display:flex;flex-direction:column;gap:6px;overflow:hidden;">
-              <div class="card-header">
-                <span class="label">Manifest 📜</span>
-              </div>
-              <div id="history-manifest" class="manifest" style="flex:1;min-height:0;overflow:auto;"></div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- SYNC TAB -->
-      <div class="tab-content" id="tab-sync">
-        <div class="sync-layout">
-          <div class="left-panel">
-            <div class="panel-title">Sync Session</div>
-            <div class="card">
-              <div class="field">
-                <label>Username / Callsign</label>
-                <input id="sync-username" type="text" placeholder="e.g. ChloeHauler" />
-              </div>
-              <div id="sync-username-error" class="settings-note" style="color: var(--danger); display:none;"></div>
-              <div class="settings-note">
-                Used to mark who started and updated missions while syncing.
-              </div>
-              <div class="settings-row" style="margin-top:8px; gap:6px;">
-                <button id="btn-sync-save-username" class="btn btn-sm btn-accent">Set Username</button>
-                <button id="btn-sync-disconnect" class="btn btn-sm">Disconnect</button>
-                <span id="sync-status-pill" class="sync-status-pill disconnected">Disconnected</span>
-              </div>
-            </div>
-
-            <div class="summary-line" style="margin-top:10px;">
-              While connected, mission changes are shared live between wingmates.
-            </div>
-          </div>
-
-          <div class="history-right-panel">
-            <div class="card">
-              <div class="card-header">
-                <span class="label">Share Signal</span>
-                <span style="font-size:11px;color:var(--muted);">No servers or accounts required</span>
-              </div>
-              <div class="settings-note">
-                Host: click <strong>Create Offer</strong> and send the code below to a friend (it auto-copies to your clipboard).<br />
-                Joiner: paste the host's code into <strong>Partner Signal</strong> and click <strong>Use Code</strong> (your reply is auto-copied).<br />
-                Host: paste the joiner's reply into <strong>Partner Signal</strong> and click <strong>Use Code</strong>.
-              </div>
-              <div class="field" style="margin-top:6px;">
-                <label>Your Signal To Share</label>
-                <textarea id="sync-local-signal" class="sync-textarea" readonly></textarea>
-              </div>
-              <div class="settings-row" style="margin-top:6px;">
-                <button id="btn-sync-create-offer" class="btn btn-sm btn-accent">Create Offer</button>
-              </div>
-              <div class="settings-row" style="margin-top:8px;">
-                <label>Partner Signal</label>
-                <textarea id="sync-remote-signal" class="sync-textarea" placeholder="Paste a code here"></textarea>
-              </div>
-              <div class="settings-row" style="margin-top:6px;">
-                <button id="btn-sync-use-code" class="btn btn-sm">Use Code</button>
-              </div>
-            </div>
-
-            <div class="card" style="flex:1;display:flex;flex-direction:column;gap:6px;overflow:hidden;">
-              <div class="card-header">
-                <span class="label">Session Log</span>
-              </div>
-              <div id="sync-log" class="sync-log" style="flex:1;min-height:0;"></div>
-            </div>
-
-            <div class="card">
-              <div class="card-header">
-                <span class="label">Players & Roles</span>
-              </div>
-              <div id="sync-roster" class="settings-note"></div>
-            </div>
-
-          </div>
-        </div>
-      </div>
-
-      <!-- SETTINGS TAB -->
-      <div class="tab-content" id="tab-settings">
-        <div class="settings-panel">
-          <div class="settings-inner card">
-            <div class="card-header">
-              <span class="label">Settings</span>
-            </div>
-            <div>
-              <div class="read-only-label">Saved Data</div>
-              <p class="settings-note">
-                This app stores your active missions and history locally in your browser (cookies + localStorage).
-              </p>
-              <div class="settings-row">
-                <button id="btn-clear-storage" class="btn btn-danger">
-                  Clear Saved Missions
-                </button>
-              </div>
-              <p class="settings-note">
-                This will erase all active and historical missions from this browser. It cannot be undone.
-              </p>
-            </div>
-          </div>
-        </div>
-      </div>
+<!-- Lists -->
+<div class="lists-row">
+  <div class="list-card">
+    <div class="card-title">List 1 &mdash; Classes</div>
+    <textarea id="list1" spellcheck="false" placeholder="One item per line...">Heir
+Seer
+Page
+Knight
+Witch
+Mage
+Maid
+Bard
+Prince
+Rogue
+Thief
+Sylph
+Muse
+Lord</textarea>
+    <div class="upload-row">
+      <input type="file" id="file1" accept=".txt" style="display:none" onchange="loadFile('list1','fname1',this)">
+      <button class="btn-upload" onclick="document.getElementById('file1').click()">&#x1F4C2; Upload .txt</button>
+      <span class="upload-filename" id="fname1"></span>
     </div>
   </div>
+  <div class="list-card">
+    <div class="card-title">List 2 &mdash; Aspects</div>
+    <textarea id="list2" spellcheck="false" placeholder="One item per line...">Heart
+Mind
+Breath
+Blood
+Life
+Doom
+Light
+Void
+Time
+Space
+Hope
+Rage</textarea>
+    <div class="upload-row">
+      <input type="file" id="file2" accept=".txt" style="display:none" onchange="loadFile('list2','fname2',this)">
+      <button class="btn-upload" onclick="document.getElementById('file2').click()">&#x1F4C2; Upload .txt</button>
+      <span class="upload-filename" id="fname2"></span>
+    </div>
+  </div>
+</div>
 
-  <script>
-    // ---------- STATE ----------
-    let activeMissions = [];
-    let historyMissions = [];
-    let currentMissionIndex = null;
-    let currentHistoryIndex = null;
-    let selectedCargoIndex = null;
+<!-- Connector format -->
+<div class="connector-row">
+  <span>Format:</span>
+  <code>[List 1]</code>
+  <input type="text" id="connector" value=" of " title="Connector between the two items" />
+  <code>[List 2]</code>
+</div>
 
-    let syncUsername = "";
-    const SYNC_MAX_PEERS = 32;
-    const ICE_SERVERS = [
-      { urls: "stun:stun.l.google.com:19302" },
-      { urls: "stun:stun1.l.google.com:19302" }
-    ];
-    const syncNodeId = (function () {
-      try {
-        if (window.crypto && crypto.randomUUID) {
-          return "n-" + crypto.randomUUID();
-        }
-      } catch (e) {}
-      return (
-        "n-" +
-        Date.now().toString(36) +
-        "-" +
-        Math.random().toString(36).slice(2, 8)
-      );
-    })();
+<!-- Count -->
+<div class="count-row">
+  <span>Generate</span>
+  <input type="number" id="count" value="1" min="1" max="999" title="How many combos to generate at once" />
+  <span>at a time</span>
+</div>
 
-    let syncState = {
-      peers: [], // { id, pc, dc, isHostSide }
-      isConnected: false,
-      isApplyingRemote: false,
-      role: "idle", // "idle" | "host" | "guest"
-      admins: {}, // { username: true }
+<!-- Controls -->
+<div class="btn-row">
+  <button class="btn-generate" id="btn-generate" onclick="generate()">Randomize</button>
+  <button class="btn-reset"    id="btn-reset"    onclick="resetUsed()">Reset Used</button>
+</div>
+
+<!-- Result display -->
+<div class="result-card">
+  <div class="result-label" id="result-label">Result</div>
+  <div id="result-wrap">
+    <div id="result" class="placeholder">press randomize to begin</div>
+  </div>
+  <div class="stats">
+    <span>Used: <strong id="s-used">0</strong></span>
+    <span>Remaining: <strong id="s-remaining">—</strong></span>
+    <span>Total possible: <strong id="s-total">—</strong></span>
+  </div>
+</div>
+
+<!-- Used combinations log -->
+<div class="history-card">
+  <div class="history-header">
+    <div class="history-title">Used Combinations</div>
+    <div class="history-count" id="history-count"></div>
+  </div>
+  <div class="history-grid" id="history-grid">
+    <span class="history-placeholder">none yet.</span>
+  </div>
+</div>
+
+<script>
+  const KEYS = {
+    used:      'classpect_used_v1',
+    list1:     'classpect_list1',
+    list2:     'classpect_list2',
+    connector: 'classpect_connector',
+    count:     'classpect_count',
+  };
+
+  // ── State ──────────────────────────────────────────────
+  let usedCombos = new Set(JSON.parse(localStorage.getItem(KEYS.used) || '[]'));
+
+  // ── Init: restore saved lists/connector/count if present ─
+  function loadSaved() {
+    const l1 = localStorage.getItem(KEYS.list1);
+    const l2 = localStorage.getItem(KEYS.list2);
+    const cn = localStorage.getItem(KEYS.connector);
+    const ct = localStorage.getItem(KEYS.count);
+    if (l1 !== null) document.getElementById('list1').value = l1;
+    if (l2 !== null) document.getElementById('list2').value = l2;
+    if (cn !== null) document.getElementById('connector').value = cn;
+    if (ct !== null) document.getElementById('count').value = ct;
+  }
+
+  // ── Helpers ────────────────────────────────────────────
+  function getList(id) {
+    return document.getElementById(id).value
+      .split('\n')
+      .map(s => s.trim())
+      .filter(Boolean);
+  }
+
+  function getConnector() {
+    return document.getElementById('connector').value;
+  }
+
+  function getCount() {
+    return Math.max(1, parseInt(document.getElementById('count').value) || 1);
+  }
+
+  function shuffle(arr) {
+    const a = arr.slice();
+    for (let i = a.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [a[i], a[j]] = [a[j], a[i]];
+    }
+    return a;
+  }
+
+  function getAllCombos() {
+    const l1 = getList('list1');
+    const l2 = getList('list2');
+    const c  = getConnector();
+    const out = [];
+    for (const a of l1)
+      for (const b of l2)
+        out.push(a + c + b);
+    return out;
+  }
+
+  function esc(str) {
+    return str
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;');
+  }
+
+  // ── Persistence ────────────────────────────────────────
+  function saveUsed() {
+    localStorage.setItem(KEYS.used, JSON.stringify([...usedCombos]));
+  }
+
+  // ── File upload ────────────────────────────────────────
+  function loadFile(listId, fnameId, input) {
+    const file = input.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const text = e.target.result.trim();
+      document.getElementById(listId).value = text;
+      localStorage.setItem(KEYS[listId], text);
+      document.getElementById(fnameId).textContent = file.name;
+      updateStats();
     };
+    reader.readAsText(file);
+    input.value = ''; // allow re-uploading same file name
+  }
 
-    const STORAGE_KEY = "sc_manifest_v1";
-    const OFFENSIVE_NAME_PARTS = [
-      "fuck",
-      "shit",
-      "bitch",
-      "cunt",
-      "asshole",
-      "dick",
-      "cock",
-      "piss"
-    ];
+  // ── Result display ─────────────────────────────────────
+  // state: 'placeholder' | 'error' | null (normal generation)
+  function showResult(picks, state) {
+    const wrap  = document.getElementById('result-wrap');
+    const label = document.getElementById('result-label');
 
-    // ---------- COOKIES HELPERS ----------
-    function setCookie(name, value, days) {
-      try {
-        const d = new Date();
-        d.setTime(d.getTime() + days * 24 * 60 * 60 * 1000);
-        const expires = "expires=" + d.toUTCString();
-        document.cookie = name + "=" + encodeURIComponent(value) + ";" + expires + ";path=/";
-      } catch (e) {
-        console.error("Failed to set cookie", e);
-      }
+    if (state === 'placeholder' || state === 'error') {
+      label.textContent = 'Result';
+      wrap.innerHTML = `<div id="result" class="${state}">${esc(picks[0])}</div>`;
+      return;
     }
 
-    function getCookie(name) {
-      const cname = name + "=";
-      const decoded = document.cookie || "";
-      const parts = decoded.split(";");
-      for (let c of parts) {
-        c = c.trim();
-        if (c.indexOf(cname) === 0) {
-          return decodeURIComponent(c.substring(cname.length));
-        }
-      }
-      return null;
+    if (picks.length === 1) {
+      label.textContent = 'Result';
+      wrap.innerHTML = '<div id="result"></div>';
+      const r = wrap.querySelector('#result');
+      void r.offsetWidth;
+      r.textContent = picks[0];
+      r.className = 'pop';
+    } else {
+      label.textContent = `Results (${picks.length})`;
+      wrap.innerHTML = `<div class="result-grid">${
+        picks.map((c, i) =>
+          `<span class="result-pill fadein" style="animation-delay:${i * 0.05}s">${esc(c)}</span>`
+        ).join('')
+      }</div>`;
+    }
+  }
+
+  // ── UI updates ─────────────────────────────────────────
+  function updateStats() {
+    const all       = getAllCombos();
+    const total     = all.length;
+    const remaining = all.filter(c => !usedCombos.has(c)).length;
+    const used      = usedCombos.size;
+
+    document.getElementById('s-used').textContent      = used;
+    document.getElementById('s-remaining').textContent = remaining;
+    document.getElementById('s-total').textContent     = total;
+
+    const exhausted = total > 0 && remaining === 0;
+    document.getElementById('btn-generate').disabled = exhausted;
+    document.getElementById('btn-reset').disabled    = used === 0;
+  }
+
+  function updateHistory() {
+    const grid = document.getElementById('history-grid');
+    const countEl = document.getElementById('history-count');
+
+    if (usedCombos.size === 0) {
+      grid.innerHTML = '<span class="history-placeholder">none yet.</span>';
+      countEl.textContent = '';
+      return;
     }
 
-    function clearStorageCompletely() {
-      try {
-        localStorage.removeItem(STORAGE_KEY);
-      } catch (e) {
-        console.warn("localStorage remove failed", e);
-      }
-      setCookie(STORAGE_KEY, "", -1);
+    const items = [...usedCombos].reverse(); // most recent first
+    grid.innerHTML = items
+      .map(c => `<span class="history-tag">${esc(c)}</span>`)
+      .join('');
+    countEl.textContent = `${items.length} combo${items.length !== 1 ? 's' : ''}`;
+  }
 
-      activeMissions = [createEmptyMission(1)];
-      historyMissions = [];
-      currentMissionIndex = 0;
-      currentHistoryIndex = null;
-      selectedCargoIndex = null;
+  // ── Actions ────────────────────────────────────────────
+  function generate() {
+    const all       = getAllCombos();
+    const available = all.filter(c => !usedCombos.has(c));
 
-      renderActiveMissionList();
-      renderHistoryMissionList();
-      renderActiveMissionDetails();
-      renderHistoryDetails();
-      renderTotals();
+    if (all.length === 0) {
+      showResult(['add items to both lists first!'], 'error');
+      return;
     }
 
-    function createEmptyMission(n) {
-      return {
-        id: generateMissionId(),
-        name: "Mission " + n,
-        pickup: "",
-        delivery: "",
-        // extra delivery stages beyond the first destination
-        stages: [],
-        startedBy: syncUsername || "local",
-        status: "In Progress",
-        notes: "",
-        cargo: []
-      };
+    if (available.length === 0) {
+      showResult(['all combinations used — reset to start over!'], 'error');
+      updateStats();
+      return;
     }
 
-    // ---------- AMOUNT PARSING / FORMATTING ----------
-    function parseAmount(str) {
-      if (str == null) return 0;
-      let s = String(str).trim().toLowerCase();
-      if (!s) return 0;
-
-      s = s.replace(/[\s\$]/g, "");
-
-      let multiplier = 1;
-      if (s.endsWith("k")) {
-        multiplier = 1e3;
-        s = s.slice(0, -1);
-      } else if (s.endsWith("m")) {
-        multiplier = 1e6;
-        s = s.slice(0, -1);
-      } else if (s.endsWith("b")) {
-        multiplier = 1e9;
-        s = s.slice(0, -1);
-      }
-
-      s = s.replace(/,/g, "");
-      if (!s) return 0;
-      const v = parseFloat(s);
-      if (isNaN(v)) return 0;
-      return v * multiplier;
-    }
-
-    function formatAmountShort(num) {
-      if (!num || isNaN(num)) return "0";
-      const abs = Math.abs(num);
-      let value = num;
-      let suffix = "";
-
-      if (abs >= 1e9) {
-        value = num / 1e9;
-        suffix = "b";
-      } else if (abs >= 1e6) {
-        value = num / 1e6;
-        suffix = "m";
-      } else if (abs >= 1e3) {
-        value = num / 1e3;
-        suffix = "k";
-      } else {
-        return num.toLocaleString("en-US", { maximumFractionDigits: 0 });
-      }
-
-      let s = value.toFixed(2);
-      s = s.replace(/\.00$/, "").replace(/(\.\d)0$/, "$1");
-      return s + suffix;
-    }
-
-    function computeMissionTotal(mission) {
-      if (!mission || !Array.isArray(mission.cargo)) return 0;
-      let total = 0;
-      for (const item of mission.cargo) {
-        const qty = parseFloat(item.qty ?? 0) || 0;
-        const valPer = parseAmount(item.value);
-        total += 1 * valPer;
-      }
-      return total;
-    }
-
-    function computeActiveTotal() {
-      return activeMissions.reduce((sum, m) => sum + computeMissionTotal(m), 0);
-    }
-
-    function computeHistoryTotalEarned() {
-      return historyMissions.reduce((sum, m) => {
-        if (String(m.status || "").toLowerCase() === "completed") {
-          return sum + computeMissionTotal(m);
-        }
-        return sum;
-      }, 0);
-    }
-
-    // ---------- STORAGE ----------
-    function loadState() {
-      try {
-        let data = null;
-        const cookieVal = getCookie(STORAGE_KEY);
-        if (cookieVal) {
-          data = JSON.parse(cookieVal);
-        } else {
-          const raw = localStorage.getItem(STORAGE_KEY);
-          if (raw) data = JSON.parse(raw);
-        }
-
-        if (!data) {
-          activeMissions = [createEmptyMission(1)];
-          historyMissions = [];
-          currentMissionIndex = 0;
-          return;
-        }
-
-        activeMissions = Array.isArray(data.active) ? data.active : [];
-        historyMissions = Array.isArray(data.history) ? data.history : [];
-        activeMissions.forEach(ensureMissionShape);
-        historyMissions.forEach(ensureMissionShape);
-        if (!activeMissions.length) activeMissions.push(createEmptyMission(1));
-        currentMissionIndex = 0;
-      } catch (e) {
-        console.error("Failed to load state", e);
-        activeMissions = [createEmptyMission(1)];
-        historyMissions = [];
-        currentMissionIndex = 0;
-      }
-    }
-
-    function saveState() {
-      const data = { active: activeMissions, history: historyMissions };
-      const json = JSON.stringify(data);
-      try {
-        localStorage.setItem(STORAGE_KEY, json);
-      } catch (e) {
-        console.warn("localStorage failed", e);
-      }
-      setCookie(STORAGE_KEY, json, 365);
-    }
-
-    // ---------- HELPERS ----------
-    function getEl(id) {
-      return document.getElementById(id);
-    }
-
-    function generateMissionId() {
-      try {
-        if (window.crypto && crypto.randomUUID) {
-          return "m-" + crypto.randomUUID();
-        }
-      } catch (e) {}
-      return (
-        "m-" +
-        Date.now().toString(36) +
-        "-" +
-        Math.random().toString(36).slice(2, 8)
-      );
-    }
-
-    function ensureMissionShape(m) {
-      if (!m) return;
-      if (!m.id) m.id = generateMissionId();
-      if (!Array.isArray(m.stages)) {
-        const extra = [];
-        if (m.delivery2 && typeof m.delivery2 === "string" && m.delivery2.trim()) {
-          extra.push(m.delivery2.trim());
-        }
-        m.stages = extra;
-      }
-      if (typeof m.startedBy !== "string") {
-        m.startedBy = "Unknown";
-      }
-      if (!Array.isArray(m.cargo)) m.cargo = [];
-    }
-
-    function findMissionIndexById(list, id) {
-      if (!id || !Array.isArray(list)) return -1;
-      return list.findIndex((m) => m && m.id === id);
-    }
-
-    function generatePeerId() {
-      return (
-        "p-" +
-        Date.now().toString(36) +
-        "-" +
-        Math.random().toString(36).slice(2, 6)
-      );
-    }
-
-    function isUsernameAllowed(name) {
-      if (!name) return false;
-      const trimmed = name.trim();
-      if (trimmed.length < 3 || trimmed.length > 24) return false;
-      const lower = trimmed.toLowerCase();
-      return !OFFENSIVE_NAME_PARTS.some((part) => lower.includes(part));
-    }
-
-    function buildRouteLabel(mission, index) {
-      const name = mission.name || `Mission ${index + 1}`;
-      const pickup = (mission.pickup || "").trim();
-      const delivery = (mission.delivery || "").trim();
-      const extraStages = Array.isArray(mission.stages) ? mission.stages : [];
-      const status = mission.status || "In Progress";
-
-      const parts = [];
-      if (pickup) parts.push(pickup);
-      if (delivery) parts.push(delivery);
-      extraStages.forEach((s) => {
-        const v = (s || "").trim();
-        if (v) parts.push(v);
-      });
-      const route = parts.join(" -> ");
-
-      return { name, route, status };
-    }
-
-    function isCurrentUserAdmin() {
-      if (!syncUsername) return false;
-      // Owner (host) is always allowed to act as admin
-      if (syncState.role === "host") return true;
-      return !!syncState.admins[syncUsername];
-    }
-
-    // ---------- RENDERING ----------
-    function renderTotals() {
-      const activeTotal = computeActiveTotal();
-      const historyTotal = computeHistoryTotalEarned();
-      const activeSpan = getEl("active-total-earnings");
-      const historySpan = getEl("history-total-earned");
-      if (activeSpan) activeSpan.textContent = formatAmountShort(activeTotal);
-      if (historySpan) historySpan.textContent = formatAmountShort(historyTotal);
-    }
-
-    function renderActiveMissionList() {
-      const container = getEl("active-mission-list");
-      if (!container) return;
-      container.innerHTML = "";
-      activeMissions.forEach((m, idx) => {
-        const { name, route, status } = buildRouteLabel(m, idx);
-        const worth = computeMissionTotal(m);
-        const worthShort = formatAmountShort(worth);
-
-        const div = document.createElement("div");
-        div.className = "mission-item" + (idx === currentMissionIndex ? " active" : "");
-        div.dataset.index = idx;
-
-        const nameRow = document.createElement("div");
-        nameRow.className = "mission-name";
-        nameRow.textContent = name;
-
-        const statusSpan = document.createElement("span");
-        statusSpan.className = "mission-status";
-        statusSpan.textContent = status;
-        nameRow.appendChild(statusSpan);
-
-        const worthRow = document.createElement("div");
-        worthRow.className = "mission-worth";
-        worthRow.textContent = "Worth: " + (worthShort || "0");
-
-        const routeRow = document.createElement("div");
-        routeRow.className = "mission-route";
-        routeRow.textContent = route || "—";
-
-        const startedRow = document.createElement("div");
-        startedRow.className = "mission-started-by";
-        const startedLabel = m.startedBy && m.startedBy !== "Unknown" ? m.startedBy : "—";
-        startedRow.textContent = "Started by: " + startedLabel;
-
-        div.appendChild(nameRow);
-        div.appendChild(worthRow);
-        div.appendChild(routeRow);
-        div.appendChild(startedRow);
-        container.appendChild(div);
-      });
-
-      renderTotals();
-    }
-
-    function renderHistoryMissionList() {
-      const container = getEl("history-mission-list");
-      if (!container) return;
-      container.innerHTML = "";
-      historyMissions.forEach((m, idx) => {
-        const { name, route, status } = buildRouteLabel(m, idx);
-        const worth = computeMissionTotal(m);
-        const worthShort = formatAmountShort(worth);
-
-        const div = document.createElement("div");
-        div.className = "mission-item" + (idx === currentHistoryIndex ? " active" : "");
-        div.dataset.index = idx;
-
-        const nameRow = document.createElement("div");
-        nameRow.className = "mission-name";
-        nameRow.textContent = name;
-
-        const statusSpan = document.createElement("span");
-        statusSpan.className = "mission-status";
-        statusSpan.textContent = status;
-        nameRow.appendChild(statusSpan);
-
-        const worthRow = document.createElement("div");
-        worthRow.className = "mission-worth";
-        worthRow.textContent = "Worth: " + (worthShort || "0");
-
-        const routeRow = document.createElement("div");
-        routeRow.className = "mission-route";
-        routeRow.textContent = route || "—";
-
-        div.appendChild(nameRow);
-        div.appendChild(worthRow);
-        div.appendChild(routeRow);
-        container.appendChild(div);
-      });
-
-      renderTotals();
-    }
-
-    function buildManifest(mission) {
-      const lines = [];
-      const title = mission.name || "Delivery Manifest";
-      lines.push(`${title} 📨`);
-      lines.push("");
-
-      const pickup = (mission.pickup || "").trim();
-      const delivery = (mission.delivery || "").trim();
-      const extraStages = Array.isArray(mission.stages) ? mission.stages : [];
-      lines.push("📦 Pick Up From " + pickup);
-
-      if (delivery) {
-        lines.push("➡️ Deliver To " + delivery);
-      }
-      extraStages.forEach((s) => {
-        const v = (s || "").trim();
-        if (v) {
-          lines.push("➡️ Then Deliver To " + v);
-        }
-      });
-      lines.push("");
-
-      for (const item of mission.cargo || []) {
-        const qty = item.qty ?? "";
-        const name = item.name ?? "";
-        const size = item.size ?? "";
-        const value = (item.value || "").trim();
-        const dest = (item.destination || "").trim();
-        const destSuffix = dest ? ` -> ${dest}` : "";
-        if (value) {
-          lines.push(`${qty}x  ${name} ${size} ${value}${destSuffix}`);
-        } else {
-          lines.push(`${qty}x  ${name} ${size}${destSuffix}`);
-        }
-      }
-      lines.push("");
-      lines.push("========================================");
-      lines.push(`Status: ${mission.status || "In Progress"}`);
-      if (mission.startedBy) {
-        lines.push(`Started By: ${mission.startedBy}`);
-      }
-      if (mission.notes) {
-        lines.push(`Notes: ${mission.notes}`);
-      }
-      return lines.join("\n");
-    }
-
-    function getMissionDestinations(mission) {
-      const destinations = [];
-      if (!mission) return destinations;
-      const first = (mission.delivery || "").trim();
-      if (first) destinations.push(first);
-      const stages = Array.isArray(mission.stages) ? mission.stages : [];
-      stages.forEach((s) => {
-        const v = (s || "").trim();
-        if (v) destinations.push(v);
-      });
-      return destinations;
-    }
-
-    function populateCargoDestinationSelect(mission) {
-      const select = getEl("cargo-destination");
-      if (!select) return;
-      const prev = select.value;
-      const destinations = getMissionDestinations(mission);
-      select.innerHTML = "";
-      if (!destinations.length) {
-        const opt = document.createElement("option");
-        opt.value = "";
-        opt.textContent = "No destinations";
-        select.appendChild(opt);
-        select.disabled = true;
-        return;
-      }
-      select.disabled = destinations.length <= 1;
-      destinations.forEach((d) => {
-        const opt = document.createElement("option");
-        opt.value = d;
-        opt.textContent = d;
-        select.appendChild(opt);
-      });
-      if (prev && destinations.includes(prev)) {
-        select.value = prev;
-      } else {
-        select.selectedIndex = 0;
-      }
-    }
-
-    function renderActiveMissionDetails() {
-      if (currentMissionIndex == null || !activeMissions[currentMissionIndex]) return;
-      const m = activeMissions[currentMissionIndex];
-      if (getEl("mission-name")) getEl("mission-name").value = m.name || "";
-      if (getEl("mission-started-by")) {
-        const input = getEl("mission-started-by");
-        input.value = m.startedBy || "";
-        input.readOnly = !isCurrentUserAdmin();
-      }
-      if (getEl("mission-pickup")) getEl("mission-pickup").value = m.pickup || "";
-      if (getEl("mission-delivery")) getEl("mission-delivery").value = m.delivery || "";
-      if (getEl("mission-notes")) getEl("mission-notes").value = m.notes || "";
-
-      populateCargoDestinationSelect(m);
-
-      // extra stages editor
-      const stagesContainer = document.getElementById("mission-extra-stages");
-      if (stagesContainer) {
-        stagesContainer.innerHTML = "";
-        const stages = Array.isArray(m.stages) ? m.stages : [];
-        stages.forEach((s, idx) => {
-          const row = document.createElement("div");
-          row.className = "field-row";
-
-          const field = document.createElement("div");
-          field.className = "field";
-
-          const label = document.createElement("label");
-          label.textContent = `➡️ Stage ${idx + 2}`;
-
-          const input = document.createElement("input");
-          input.type = "text";
-          input.value = s || "";
-          input.className = "mission-stage-input";
-          input.dataset.stageIndex = String(idx);
-
-          field.appendChild(label);
-          field.appendChild(input);
-          row.appendChild(field);
-          stagesContainer.appendChild(row);
-        });
-      }
-
-      const tbody = getEl("cargo-table-body");
-      if (!tbody) return;
-      tbody.innerHTML = "";
-      m.cargo.forEach((c, idx) => {
-        const tr = document.createElement("tr");
-        tr.dataset.index = idx;
-        if (idx === selectedCargoIndex) tr.classList.add("active");
-
-        const tdQty = document.createElement("td");
-        tdQty.textContent = c.qty ?? "";
-
-        const tdName = document.createElement("td");
-        tdName.textContent = c.name ?? "";
-
-        const tdSize = document.createElement("td");
-        tdSize.textContent = c.size ?? "";
-
-        const tdDest = document.createElement("td");
-        tdDest.textContent = c.destination ?? "";
-
-        const tdValue = document.createElement("td");
-        tdValue.textContent = c.value ?? "";
-
-        tr.appendChild(tdQty);
-        tr.appendChild(tdName);
-        tr.appendChild(tdSize);
-        tr.appendChild(tdDest);
-        tr.appendChild(tdValue);
-        tbody.appendChild(tr);
-      });
-
-      if (selectedCargoIndex == null || selectedCargoIndex >= m.cargo.length) {
-        selectedCargoIndex = null;
-        if (getEl("cargo-qty")) getEl("cargo-qty").value = "";
-        if (getEl("cargo-name")) getEl("cargo-name").value = "";
-        if (getEl("cargo-size")) getEl("cargo-size").value = "EX.Small";
-        if (getEl("cargo-value")) getEl("cargo-value").value = "";
-        const destSel = getEl("cargo-destination");
-        if (destSel) {
-          const dests = getMissionDestinations(m);
-          if (dests.length) {
-            destSel.value = dests[0];
-          }
-        }
-      }
-
-      const manifestEl = getEl("manifest-text");
-      if (manifestEl) manifestEl.textContent = buildManifest(m);
-      renderTotals();
-    }
-
-    function renderHistoryDetails() {
-      if (currentHistoryIndex == null || !historyMissions[currentHistoryIndex]) {
-        if (getEl("history-name")) getEl("history-name").textContent = "—";
-        if (getEl("history-status")) getEl("history-status").textContent = "—";
-        if (getEl("history-pickup")) getEl("history-pickup").textContent = "—";
-        if (getEl("history-delivery")) getEl("history-delivery").textContent = "—";
-        if (getEl("history-delivery2")) getEl("history-delivery2").textContent = "—";
-        if (getEl("history-notes")) getEl("history-notes").textContent = "—";
-        if (getEl("history-manifest")) getEl("history-manifest").textContent = "";
-        renderTotals();
-        return;
-      }
-      const m = historyMissions[currentHistoryIndex];
-      const stages = Array.isArray(m.stages) ? m.stages : [];
-      if (getEl("history-name")) getEl("history-name").textContent = m.name || "—";
-      if (getEl("history-status")) getEl("history-status").textContent = m.status || "—";
-      if (getEl("history-pickup")) getEl("history-pickup").textContent = m.pickup || "—";
-      if (getEl("history-delivery")) getEl("history-delivery").textContent = m.delivery || "—";
-      if (getEl("history-delivery2")) getEl("history-delivery2").textContent = (stages[0] || "—");
-      if (getEl("history-notes")) getEl("history-notes").textContent = m.notes || "—";
-      if (getEl("history-manifest")) getEl("history-manifest").textContent = buildManifest(m);
-      renderTotals();
-    }
-
-    // ---------- SYNC FORM -> STATE ----------
-    function saveCurrentMissionFromForm() {
-      if (currentMissionIndex == null || !activeMissions[currentMissionIndex]) return;
-      const m = activeMissions[currentMissionIndex];
-      if (!m.startedBy || m.startedBy === "local") {
-        m.startedBy = syncUsername || m.startedBy || "local";
-      }
-      if (getEl("mission-name")) m.name = getEl("mission-name").value.trim();
-      if (getEl("mission-pickup")) m.pickup = getEl("mission-pickup").value.trim();
-      if (getEl("mission-delivery")) m.delivery = getEl("mission-delivery").value.trim();
-      if (getEl("mission-started-by") && isCurrentUserAdmin()) {
-        const ownerVal = getEl("mission-started-by").value.trim();
-        if (ownerVal) m.startedBy = ownerVal;
-      }
-      if (getEl("mission-notes")) m.notes = getEl("mission-notes").value.trim();
-
-      // collect extra stages from dynamic inputs
-      const stages = [];
-      document.querySelectorAll(".mission-stage-input").forEach((input) => {
-        const v = input.value.trim();
-        if (v) stages.push(v);
-      });
-      m.stages = stages;
-
-      if (!m.status) m.status = "In Progress";
-      saveState();
-      renderActiveMissionList();
-      const manifestEl = getEl("manifest-text");
-      if (manifestEl) manifestEl.textContent = buildManifest(m);
-      renderTotals();
-      syncSend({ type: "mission_updated", mission: m });
-    }
-
-    // ---------- ACTIONS ----------
-    function selectActiveMission(index) {
-      if (index < 0 || index >= activeMissions.length) return;
-      saveCurrentMissionFromForm();
-      currentMissionIndex = index;
-      selectedCargoIndex = null;
-      renderActiveMissionList();
-      renderActiveMissionDetails();
-    }
-
-    function selectHistoryMission(index) {
-      if (index < 0 || index >= historyMissions.length) return;
-      currentHistoryIndex = index;
-      renderHistoryMissionList();
-      renderHistoryDetails();
-    }
-
-    function addNewMission() {
-      saveCurrentMissionFromForm();
-      const n = activeMissions.length + 1;
-      activeMissions.push(createEmptyMission(n));
-      currentMissionIndex = activeMissions.length - 1;
-      selectedCargoIndex = null;
-      saveState();
-      renderActiveMissionList();
-      renderActiveMissionDetails();
-      if (currentMissionIndex != null && activeMissions[currentMissionIndex]) {
-        syncSend({ type: "mission_started", mission: activeMissions[currentMissionIndex] });
-      }
-    }
-
-    function completeCurrentMission() {
-      if (currentMissionIndex == null || !activeMissions[currentMissionIndex]) return;
-      saveCurrentMissionFromForm();
-      const m = activeMissions.splice(currentMissionIndex, 1)[0];
-      m.status = "Completed";
-      historyMissions.push(m);
-      currentHistoryIndex = historyMissions.length - 1;
-      syncSend({ type: "mission_completed", mission: m });
-
-      if (!activeMissions.length) {
-        activeMissions.push(createEmptyMission(1));
-        currentMissionIndex = 0;
-      } else if (currentMissionIndex >= activeMissions.length) {
-        currentMissionIndex = activeMissions.length - 1;
-      }
-
-      selectedCargoIndex = null;
-      saveState();
-      renderActiveMissionList();
-      renderHistoryMissionList();
-      renderActiveMissionDetails();
-      renderHistoryDetails();
-    }
-
-    function cancelCurrentMission() {
-      if (currentMissionIndex == null || !activeMissions[currentMissionIndex]) return;
-      if (!confirm("Mark this mission as cancelled and move it to History?")) return;
-      saveCurrentMissionFromForm();
-      const m = activeMissions.splice(currentMissionIndex, 1)[0];
-      m.status = "Cancelled";
-      historyMissions.push(m);
-      currentHistoryIndex = historyMissions.length - 1;
-      syncSend({ type: "mission_cancelled", mission: m });
-
-      if (!activeMissions.length) {
-        activeMissions.push(createEmptyMission(1));
-        currentMissionIndex = 0;
-      } else if (currentMissionIndex >= activeMissions.length) {
-        currentMissionIndex = activeMissions.length - 1;
-      }
-
-      selectedCargoIndex = null;
-      saveState();
-      renderActiveMissionList();
-      renderHistoryMissionList();
-      renderActiveMissionDetails();
-      renderHistoryDetails();
-    }
-
-    function deleteHistoryMission() {
-      if (currentHistoryIndex == null || !historyMissions[currentHistoryIndex]) return;
-      if (!confirm("Delete this history mission?")) return;
-
-      historyMissions.splice(currentHistoryIndex, 1);
-      if (!historyMissions.length) {
-        currentHistoryIndex = null;
-      } else if (currentHistoryIndex >= historyMissions.length) {
-        currentHistoryIndex = historyMissions.length - 1;
-      }
-
-      saveState();
-      renderHistoryMissionList();
-      renderHistoryDetails();
-    }
-
-    function addCargoItem() {
-      if (currentMissionIndex == null || !activeMissions[currentMissionIndex]) return;
-      const qtyEl = getEl("cargo-qty");
-      const nameEl = getEl("cargo-name");
-      const sizeEl = getEl("cargo-size");
-      const destEl = getEl("cargo-destination");
-      const valueEl = getEl("cargo-value");
-      if (!qtyEl || !nameEl || !sizeEl || !valueEl) return;
-
-      const qtyStr = qtyEl.value.trim();
-      const name = nameEl.value.trim();
-      const size = sizeEl.value;
-      const value = valueEl.value.trim();
-      const destination = destEl ? destEl.value : "";
-
-      if (!qtyStr || !name) {
-        alert("Quantity and Item name are required.");
-        return;
-      }
-      const qty = parseInt(qtyStr, 10);
-      if (Number.isNaN(qty) || qty <= 0) {
-        alert("Quantity must be a positive number.");
-        return;
-      }
-
-      const m = activeMissions[currentMissionIndex];
-      m.cargo.push({ qty, name, size, value, destination });
-      selectedCargoIndex = m.cargo.length - 1;
-      saveState();
-      renderActiveMissionDetails();
-      renderActiveMissionList();
-      syncSend({ type: "mission_updated", mission: m });
-    }
-
-    function updateCargoItem() {
-      if (currentMissionIndex == null || !activeMissions[currentMissionIndex]) return;
-      if (selectedCargoIndex == null) {
-        alert("Select a cargo row to update.");
-        return;
-      }
-      const qtyEl = getEl("cargo-qty");
-      const nameEl = getEl("cargo-name");
-      const sizeEl = getEl("cargo-size");
-      const destEl = getEl("cargo-destination");
-      const valueEl = getEl("cargo-value");
-      if (!qtyEl || !nameEl || !sizeEl || !valueEl) return;
-
-      const qtyStr = qtyEl.value.trim();
-      const name = nameEl.value.trim();
-      const size = sizeEl.value;
-      const value = valueEl.value.trim();
-      const destination = destEl ? destEl.value : "";
-
-      if (!qtyStr || !name) {
-        alert("Quantity and Item name are required.");
-        return;
-      }
-      const qty = parseInt(qtyStr, 10);
-      if (Number.isNaN(qty) || qty <= 0) {
-        alert("Quantity must be a positive number.");
-        return;
-      }
-
-      const m = activeMissions[currentMissionIndex];
-      if (!m.cargo[selectedCargoIndex]) return;
-      m.cargo[selectedCargoIndex] = { qty, name, size, value, destination };
-      saveState();
-      renderActiveMissionDetails();
-      renderActiveMissionList();
-      syncSend({ type: "mission_updated", mission: m });
-    }
-
-    function removeCargoItem() {
-      if (currentMissionIndex == null || !activeMissions[currentMissionIndex]) return;
-      if (selectedCargoIndex == null) {
-        alert("Select a cargo row to remove.");
-        return;
-      }
-      const m = activeMissions[currentMissionIndex];
-      m.cargo.splice(selectedCargoIndex, 1);
-      selectedCargoIndex = null;
-      saveState();
-      renderActiveMissionDetails();
-      renderActiveMissionList();
-      syncSend({ type: "mission_updated", mission: m });
-    }
-
-    // ---------- INIT / EVENTS ----------
-    function initTabs() {
-      const tabs = document.querySelectorAll(".tab-btn");
-      tabs.forEach(btn => {
-        btn.addEventListener("click", () => {
-          const tab = btn.dataset.tab;
-          tabs.forEach(b => b.classList.toggle("active", b === btn));
-          document.querySelectorAll(".tab-content").forEach(c => {
-            c.classList.toggle("active", c.id === "tab-" + tab);
-          });
-        });
-      });
-    }
-
-    function safeOnClick(id, handler) {
-      const el = getEl(id);
-      if (el && typeof handler === "function") {
-        el.addEventListener("click", handler);
-      }
-    }
-
-    function initEvents() {
-      const activeList = getEl("active-mission-list");
-      if (activeList) {
-        activeList.addEventListener("click", (e) => {
-          const item = e.target.closest(".mission-item");
-          if (!item) return;
-          const idx = parseInt(item.dataset.index, 10);
-          if (!Number.isNaN(idx)) selectActiveMission(idx);
-        });
-      }
-
-      const histList = getEl("history-mission-list");
-      if (histList) {
-        histList.addEventListener("click", (e) => {
-          const item = e.target.closest(".mission-item");
-          if (!item) return;
-          const idx = parseInt(item.dataset.index, 10);
-          if (!Number.isNaN(idx)) selectHistoryMission(idx);
-        });
-      }
-
-      ["mission-name", "mission-started-by", "mission-pickup", "mission-delivery", "mission-notes"].forEach(id => {
-        const el = getEl(id);
-        if (el) {
-          el.addEventListener("input", () => {
-            saveCurrentMissionFromForm();
-          });
-        }
-      });
-
-      safeOnClick("btn-mission-add-stage", () => {
-        if (currentMissionIndex == null || !activeMissions[currentMissionIndex]) return;
-        const m = activeMissions[currentMissionIndex];
-        if (!Array.isArray(m.stages)) m.stages = [];
-        m.stages.push("");
-        renderActiveMissionDetails();
-        const lastIndex = m.stages.length - 1;
-        const lastInput = document.querySelector(
-          `.mission-stage-input[data-stage-index="${lastIndex}"]`
-        );
-        if (lastInput) {
-          lastInput.focus();
-        }
-      });
-
-      const stagesContainer = document.getElementById("mission-extra-stages");
-      if (stagesContainer) {
-        stagesContainer.addEventListener("input", (e) => {
-          const target = e.target;
-          if (target && target.classList && target.classList.contains("mission-stage-input")) {
-            saveCurrentMissionFromForm();
-          }
-        });
-      }
-
-      const cargoBody = getEl("cargo-table-body");
-      if (cargoBody) {
-        cargoBody.addEventListener("click", (e) => {
-          const tr = e.target.closest("tr");
-          if (!tr) return;
-          const idx = parseInt(tr.dataset.index, 10);
-          if (Number.isNaN(idx)) return;
-          selectedCargoIndex = idx;
-          renderActiveMissionDetails();
-          const m = activeMissions[currentMissionIndex];
-          const c = m.cargo[idx];
-          if (getEl("cargo-qty")) getEl("cargo-qty").value = c.qty ?? "";
-          if (getEl("cargo-name")) getEl("cargo-name").value = c.name ?? "";
-          if (getEl("cargo-size")) getEl("cargo-size").value = c.size ?? "EX.Small";
-          if (getEl("cargo-value")) getEl("cargo-value").value = c.value ?? "";
-          const destSel = getEl("cargo-destination");
-          if (destSel) {
-            const destVal = (c.destination || "").trim();
-            const options = Array.from(destSel.options || []);
-            if (destVal && options.some((o) => o.value === destVal)) {
-              destSel.value = destVal;
-            } else if (options.length) {
-              destSel.selectedIndex = 0;
-            }
-          }
-        });
-      }
-
-      // Active buttons
-      safeOnClick("btn-new-mission", addNewMission);
-      safeOnClick("btn-complete-mission", completeCurrentMission);
-      safeOnClick("btn-cancel-mission", cancelCurrentMission);
-
-      safeOnClick("btn-add-cargo", addCargoItem);
-      safeOnClick("btn-update-cargo", updateCargoItem);
-      safeOnClick("btn-remove-cargo", removeCargoItem);
-
-      // History delete buttons
-      safeOnClick("btn-delete-history-side", deleteHistoryMission);
-      safeOnClick("btn-delete-history-detail", deleteHistoryMission);
-
-      // Settings clear storage
-      safeOnClick("btn-clear-storage", () => {
-        if (!confirm("Clear all saved missions (active + history) from this browser?")) return;
-        clearStorageCompletely();
-      });
-
-      // Sync tab events
-      safeOnClick("btn-sync-save-username", () => {
-        if (ensureValidUsername()) {
-          appendSyncLog("Username set to " + syncUsername + ".");
-        }
-      });
-
-      safeOnClick("btn-sync-disconnect", () => {
-        closeAllSyncConnections();
-        syncState.role = "idle";
-        appendSyncLog("Disconnected from all peers.");
-      });
-
-      safeOnClick("btn-sync-create-offer", () => {
-        createSyncOffer().catch((err) => {
-          console.error(err);
-          alert("Failed to create offer: " + (err && err.message ? err.message : err));
-        });
-      });
-
-      // Single "Use Code" button: chooses behavior based on role (host vs guest)
-      safeOnClick("btn-sync-use-code", () => {
-        const raw = getEl("sync-remote-signal")?.value || "";
-        if (!raw.trim()) {
-          alert("Paste a code from your partner first.");
-          return;
-        }
-        try {
-          const desc = JSON.parse(raw.trim());
-          if (!desc || typeof desc !== "object" || !desc.sdp || !desc.type) {
-            alert("Code does not look like a valid WebRTC offer/answer.");
-            return;
-          }
-        } catch (e) {
-          alert("Code is not valid JSON.");
-          return;
-        }
-
-        if (syncState.role === "host") {
-          // Host always applies answers from guests
-          applyAnswerAsHost().catch((err) => {
-            console.error(err);
-            alert("Failed to use answer: " + (err && err.message ? err.message : err));
-          });
-        } else {
-          // Idle or guest uses offers from host
-          joinFromOffer().catch((err) => {
-            console.error(err);
-            alert("Failed to use offer: " + (err && err.message ? err.message : err));
-          });
-        }
-      });
-
-      // Admin controls are managed from the roster; no manual username entry
-    }
-
-    function appendSyncLog(text) {
-      const logEl = getEl("sync-log");
-      if (!logEl) return;
-      const time = new Date().toLocaleTimeString();
-      logEl.textContent += `[${time}] ${text}\n`;
-      logEl.scrollTop = logEl.scrollHeight;
-    }
-
-    function updateSyncStatusLabel() {
-      const pill = getEl("sync-status-pill");
-      if (!pill) return;
-      const openPeers = (syncState.peers || []).filter(
-        (p) => p.dc && p.dc.readyState === "open"
-      ).length;
-      syncState.isConnected = openPeers > 0;
-      pill.classList.toggle("connected", openPeers > 0);
-      pill.classList.toggle("disconnected", openPeers === 0);
-      if (!openPeers) {
-        pill.textContent = "Disconnected";
-      } else if (openPeers === 1) {
-        pill.textContent = "Connected (1)";
-      } else {
-        pill.textContent = `Connected (${openPeers})`;
-      }
-    }
-
-    function ensureValidUsername() {
-      const input = getEl("sync-username");
-      const errEl = getEl("sync-username-error");
-      if (!input) return false;
-      const name = input.value.trim();
-      let error = "";
-      if (!isUsernameAllowed(name)) {
-        error = "Choose a username 3-24 characters with no profanity.";
-      }
-      if (errEl) {
-        errEl.textContent = error;
-        errEl.style.display = error ? "block" : "none";
-      }
-      if (error) return false;
-      syncUsername = name;
-      return true;
-    }
-
-    function closeAllSyncConnections() {
-      (syncState.peers || []).forEach((p) => {
-        try {
-          if (p.dc) p.dc.close();
-        } catch (e) {}
-        try {
-          if (p.pc) p.pc.close();
-        } catch (e) {}
-      });
-      syncState.peers = [];
-      syncState.isConnected = false;
-      updateSyncStatusLabel();
-      renderRoster();
-    }
-
-    function getOpenPeers() {
-      return (syncState.peers || []).filter(
-        (p) => p.dc && p.dc.readyState === "open"
-      );
-    }
-
-    function getKnownUsernames() {
-      const set = new Set();
-      if (syncUsername) set.add(syncUsername);
-      (syncState.peers || []).forEach((p) => {
-        if (p.username) set.add(p.username);
-      });
-      return Array.from(set);
-    }
-
-    function renderRoster() {
-      const container = getEl("sync-roster");
-      if (!container) return;
-      const users = getKnownUsernames();
-      if (!users.length) {
-        container.textContent = "No players connected yet.";
-        return;
-      }
-      const isHost = syncState.role === "host";
-      const list = document.createElement("div");
-      list.style.display = "flex";
-      list.style.flexDirection = "column";
-      list.style.gap = "4px";
-
-      users.forEach((name) => {
-        const row = document.createElement("div");
-        row.style.display = "flex";
-        row.style.alignItems = "center";
-        row.style.justifyContent = "space-between";
-        row.style.fontSize = "11px";
-
-        const left = document.createElement("div");
-        left.textContent = name + (name === syncUsername ? " (you)" : "");
-
-        const right = document.createElement("div");
-        right.style.display = "flex";
-        right.style.gap = "4px";
-
-        const rolePill = document.createElement("span");
-        rolePill.className = "sync-status-pill";
-
-        const isOwner = isHost && name === syncUsername;
-        const isAdmin = !!syncState.admins[name];
-
-        if (isOwner) {
-          rolePill.textContent = "Owner";
-        } else if (isAdmin) {
-          rolePill.textContent = "Admin";
-        } else {
-          rolePill.textContent = "Player";
-        }
-
-        right.appendChild(rolePill);
-
-        if (isHost && name !== syncUsername) {
-          const btnToggle = document.createElement("button");
-          btnToggle.textContent = isAdmin ? "Demote" : "Promote";
-          btnToggle.className = "btn btn-sm";
-          btnToggle.style.fontSize = "10px";
-          btnToggle.addEventListener("click", () => {
-            const nowAdmin = !syncState.admins[name];
-            syncState.admins[name] = nowAdmin;
-            renderRoster();
-            syncSend({ type: "admin_set", username: name, isAdmin: nowAdmin });
-          });
-          right.appendChild(btnToggle);
-
-          const btnKick = document.createElement("button");
-          btnKick.textContent = "Kick";
-          btnKick.className = "btn btn-sm btn-danger";
-          btnKick.style.fontSize = "10px";
-          btnKick.addEventListener("click", () => {
-            if (!confirm(`Disconnect ${name} from this session?`)) return;
-            (syncState.peers || []).forEach((p) => {
-              if (p.username === name) {
-                try { if (p.dc) p.dc.close(); } catch (e) {}
-                try { if (p.pc) p.pc.close(); } catch (e) {}
-              }
-            });
-            // remove peers with that username
-            syncState.peers = (syncState.peers || []).filter((p) => p.username !== name);
-            delete syncState.admins[name];
-            updateSyncStatusLabel();
-            renderRoster();
-            appendSyncLog(`Kicked ${name} from session.`);
-          });
-          right.appendChild(btnKick);
-        }
-
-        row.appendChild(left);
-        row.appendChild(right);
-        list.appendChild(row);
-      });
-
-      container.innerHTML = "";
-      container.appendChild(list);
-    }
-
-    function setupDataChannel(peer, channel) {
-      peer.dc = channel;
-      channel.onopen = () => {
-        updateSyncStatusLabel();
-        appendSyncLog("Sync channel open.");
-        // share our current active missions so both sides see the union (only to this peer)
-        syncSendToPeer(peer, { type: "hello_state", missions: activeMissions });
-      };
-      channel.onclose = () => {
-        peer.dc = null;
-        updateSyncStatusLabel();
-        renderRoster();
-        appendSyncLog("Sync channel closed.");
-      };
-      channel.onerror = (ev) => {
-        appendSyncLog("Sync error.");
-        console.error("Sync error", ev);
-      };
-      channel.onmessage = (ev) => {
-        try {
-          const msg = JSON.parse(ev.data);
-          handleSyncMessage(msg, peer);
-        } catch (e) {
-          console.warn("Bad sync message", e);
-        }
-      };
-    }
-
-    function syncSendToPeer(peer, payload, preserveOrigin) {
-      if (!peer || !peer.dc || peer.dc.readyState !== "open" || syncState.isApplyingRemote) return;
-      const msg = preserveOrigin
-        ? payload
-        : {
-            v: 1,
-            sender: syncUsername || "anon",
-            originId: syncNodeId,
-            timestamp: Date.now(),
-            ...payload,
-          };
-      try {
-        peer.dc.send(JSON.stringify(msg));
-      } catch (e) {
-        console.warn("sync send failed", e);
-      }
-    }
-
-    function syncSend(payload) {
-      if (syncState.isApplyingRemote) return;
-      const peers = getOpenPeers();
-      if (!peers.length) return;
-      const msg = {
-        v: 1,
-        sender: syncUsername || "anon",
-        originId: syncNodeId,
-        timestamp: Date.now(),
-        ...payload,
-      };
-      const json = JSON.stringify(msg);
-      peers.forEach((peer) => {
-        try {
-          peer.dc.send(json);
-        } catch (e) {
-          console.warn("sync send failed", e);
-        }
-      });
-    }
-
-    function handleSyncMessage(msg, fromPeer) {
-      if (!msg || typeof msg !== "object") return;
-      if (msg.originId && msg.originId === syncNodeId) return;
-      const sender = msg.sender || "Partner";
-
-      // track remote usernames for roster
-      if (fromPeer && msg.sender && !fromPeer.username) {
-        fromPeer.username = msg.sender;
-        renderRoster();
-      }
-
-      syncState.isApplyingRemote = true;
-      try {
-        if (msg.type === "hello_state" && Array.isArray(msg.missions)) {
-          let added = 0;
-          msg.missions.forEach((m) => {
-            ensureMissionShape(m);
-            if (!m.startedBy || m.startedBy === "Unknown") {
-              m.startedBy = sender;
-            }
-            const existingActive = findMissionIndexById(activeMissions, m.id);
-            const existingHistory = findMissionIndexById(historyMissions, m.id);
-            if (existingActive === -1 && existingHistory === -1) {
-              activeMissions.push(m);
-              added++;
-            }
-          });
-          if (added > 0) {
-            saveState();
-            renderActiveMissionList();
-            renderActiveMissionDetails();
-            appendSyncLog(`${sender} shared ${added} active mission(s).`);
-          }
-        } else if (msg.type === "mission_started" && msg.mission) {
-          const m = msg.mission;
-          ensureMissionShape(m);
-          if (!m.startedBy || m.startedBy === "Unknown") {
-            m.startedBy = sender;
-          }
-          const existingActive = findMissionIndexById(activeMissions, m.id);
-          const existingHistory = findMissionIndexById(historyMissions, m.id);
-          if (existingActive === -1 && existingHistory === -1) {
-            activeMissions.push(m);
-            saveState();
-            renderActiveMissionList();
-            appendSyncLog(`${sender} started mission "${m.name || m.id}".`);
-          }
-        } else if (msg.type === "mission_updated" && msg.mission) {
-          const m = msg.mission;
-          ensureMissionShape(m);
-          if (!m.startedBy || m.startedBy === "Unknown") {
-            m.startedBy = sender;
-          }
-          let idx = findMissionIndexById(activeMissions, m.id);
-          if (idx !== -1) {
-            activeMissions[idx] = m;
-            saveState();
-            renderActiveMissionList();
-            if (idx === currentMissionIndex) {
-              renderActiveMissionDetails();
-            }
-            appendSyncLog(`${sender} updated mission "${m.name || m.id}".`);
-          } else {
-            idx = findMissionIndexById(historyMissions, m.id);
-            if (idx !== -1) {
-              historyMissions[idx] = m;
-              saveState();
-              renderHistoryMissionList();
-              if (idx === currentHistoryIndex) {
-                renderHistoryDetails();
-              }
-              appendSyncLog(`${sender} updated completed mission "${m.name || m.id}".`);
-            }
-          }
-        } else if (
-          (msg.type === "mission_completed" || msg.type === "mission_cancelled") &&
-          msg.mission
-        ) {
-          const m = msg.mission;
-          ensureMissionShape(m);
-          if (!m.startedBy || m.startedBy === "Unknown") {
-            m.startedBy = sender;
-          }
-          const finalStatus = msg.type === "mission_completed" ? "Completed" : "Cancelled";
-          m.status = finalStatus;
-
-          let aIdx = findMissionIndexById(activeMissions, m.id);
-          if (aIdx !== -1) {
-            activeMissions.splice(aIdx, 1);
-            if (!activeMissions.length) {
-              activeMissions.push(createEmptyMission(1));
-              currentMissionIndex = 0;
-            } else if (currentMissionIndex >= activeMissions.length) {
-              currentMissionIndex = activeMissions.length - 1;
-            }
-          }
-
-          let hIdx = findMissionIndexById(historyMissions, m.id);
-          if (hIdx === -1) {
-            historyMissions.push(m);
-            currentHistoryIndex = historyMissions.length - 1;
-          } else {
-            historyMissions[hIdx] = m;
-            currentHistoryIndex = hIdx;
-          }
-
-          saveState();
-          renderActiveMissionList();
-          renderHistoryMissionList();
-          renderActiveMissionDetails();
-          renderHistoryDetails();
-
-          appendSyncLog(
-            `${sender} ${finalStatus === "Completed" ? "completed" : "cancelled"} mission "${
-              m.name || m.id
-            }".`
-          );
-        } else if (msg.type === "admin_set" && typeof msg.username === "string") {
-          // Only apply admin changes coming from the host; guests update their local view
-          if (syncState.role !== "host") {
-            syncState.admins[msg.username] = !!msg.isAdmin;
-            renderRoster();
-            appendSyncLog(
-              `${sender} ${msg.isAdmin ? "granted" : "revoked"} admin for ${msg.username}.`
-            );
-          }
-        }
-      } finally {
-        syncState.isApplyingRemote = false;
-      }
-
-      // Host fans out mission changes from one peer to all others
-      if (
-        syncState.role === "host" &&
-        fromPeer &&
-        (msg.type === "mission_started" ||
-          msg.type === "mission_updated" ||
-          msg.type === "mission_completed" ||
-          msg.type === "mission_cancelled")
-      ) {
-        const peers = getOpenPeers();
-        peers.forEach((peer) => {
-          if (peer !== fromPeer) {
-            syncSendToPeer(peer, msg, true);
-          }
-        });
-      }
-    }
-
-    async function createSyncOffer() {
-      if (!ensureValidUsername()) return;
-      if (syncState.role === "guest") {
-        alert("You are connected as a guest. Refresh the page to become a host.");
-        return;
-      }
-      if (getOpenPeers().length >= SYNC_MAX_PEERS) {
-        alert("Maximum sync peers reached.");
-        return;
-      }
-      syncState.role = "host";
-      const pc = new RTCPeerConnection({ iceServers: ICE_SERVERS });
-      const peer = { id: generatePeerId(), pc, dc: null, isHostSide: true };
-      syncState.peers.push(peer);
-      const dc = pc.createDataChannel("missions");
-      setupDataChannel(peer, dc);
-      appendSyncLog("Creating offer...");
-      pc.onicecandidate = (event) => {
-        if (!event.candidate) {
-          const desc = pc.localDescription;
-          const out = getEl("sync-local-signal");
-          if (out && desc) {
-            const txt = JSON.stringify(desc);
-            out.value = txt;
-            try {
-              navigator.clipboard.writeText(txt);
-              appendSyncLog("Copied your offer code to clipboard.");
-            } catch (e) {
-              // clipboard might be blocked; ignore
-            }
-          }
-        }
-      };
-      const offer = await pc.createOffer();
-      await pc.setLocalDescription(offer);
-    }
-
-    async function joinFromOffer() {
-      if (!ensureValidUsername()) return;
-      // guest connects to a single host
-      closeAllSyncConnections();
-      syncState.role = "guest";
-      const raw = getEl("sync-remote-signal")?.value || "";
-      if (!raw.trim()) {
-        alert("Paste your partner's offer code first.");
-        return;
-      }
-      let remoteDesc;
-      try {
-        remoteDesc = JSON.parse(raw.trim());
-      } catch (e) {
-        alert("Partner offer code is not valid JSON.");
-        return;
-      }
-      const pc = new RTCPeerConnection({ iceServers: ICE_SERVERS });
-      const peer = { id: generatePeerId(), pc, dc: null, isHostSide: false };
-      syncState.peers.push(peer);
-      pc.ondatachannel = (ev) => {
-        setupDataChannel(peer, ev.channel);
-      };
-      pc.onicecandidate = (event) => {
-        if (!event.candidate) {
-          const desc = pc.localDescription;
-          const out = getEl("sync-local-signal");
-          if (out && desc) {
-            const txt = JSON.stringify(desc);
-            out.value = txt;
-            try {
-              navigator.clipboard.writeText(txt);
-              appendSyncLog("Copied your answer code to clipboard.");
-            } catch (e) {
-              // ignore clipboard errors
-            }
-          }
-        }
-      };
-      await pc.setRemoteDescription(remoteDesc);
-      const answer = await pc.createAnswer();
-      await pc.setLocalDescription(answer);
-      appendSyncLog("Created answer; send your code back to your partner.");
-    }
-
-    function findPendingHostPeerForAnswer() {
-      return (syncState.peers || []).find((p) => {
-        return p.pc && p.pc.signalingState === "have-local-offer";
-      });
-    }
-
-    async function applyAnswerAsHost() {
-      if (syncState.role !== "host") {
-        alert("Only the host can apply an answer code.");
-        return;
-      }
-      const peer = findPendingHostPeerForAnswer();
-      if (!peer || !peer.pc) {
-        alert("Create an offer first, then paste your partner's answer.");
-        return;
-      }
-      const raw = getEl("sync-remote-signal")?.value || "";
-      if (!raw.trim()) {
-        alert("Paste your partner's answer first.");
-        return;
-      }
-      let remoteDesc;
-      try {
-        remoteDesc = JSON.parse(raw.trim());
-      } catch (e) {
-        alert("Partner answer is not valid JSON.");
-        return;
-      }
-      await peer.pc.setRemoteDescription(remoteDesc);
-      appendSyncLog("Applied partner answer. Waiting for sync channel to open...");
-    }
-
-    function init() {
-      loadState();
-      initTabs();
-      initEvents();
-      renderActiveMissionList();
-      renderHistoryMissionList();
-      renderActiveMissionDetails();
-      renderHistoryDetails();
-      renderTotals();
-      updateSyncStatusLabel();
-      renderRoster();
-    }
-
-    window.addEventListener("DOMContentLoaded", init);
-  </script>
+    // Pick min(requested, available) unique combos via Fisher-Yates
+    const n     = Math.min(getCount(), available.length);
+    const picks = shuffle(available).slice(0, n);
+
+    picks.forEach(c => usedCombos.add(c));
+    saveUsed();
+
+    showResult(picks, null);
+    updateStats();
+    updateHistory();
+  }
+
+  function resetUsed() {
+    if (usedCombos.size === 0) return;
+    if (!confirm(`Clear all ${usedCombos.size} used combination(s) and start fresh?`)) return;
+
+    usedCombos.clear();
+    saveUsed();
+
+    showResult(['press randomize to begin'], 'placeholder');
+    updateStats();
+    updateHistory();
+  }
+
+  // ── Wire up list/connector changes ─────────────────────
+  ['list1', 'list2'].forEach(id => {
+    document.getElementById(id).addEventListener('input', () => {
+      localStorage.setItem(KEYS[id], document.getElementById(id).value);
+      updateStats();
+    });
+  });
+
+  document.getElementById('connector').addEventListener('input', () => {
+    localStorage.setItem(KEYS.connector, document.getElementById('connector').value);
+    updateStats();
+  });
+
+  document.getElementById('count').addEventListener('input', () => {
+    localStorage.setItem(KEYS.count, document.getElementById('count').value);
+  });
+
+  // ── Boot ───────────────────────────────────────────────
+  loadSaved();
+  updateStats();
+  updateHistory();
+</script>
 </body>
 </html>
