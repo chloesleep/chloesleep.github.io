@@ -103,7 +103,7 @@
       display: flex;
       flex-direction: column;
       align-items: center;
-      padding: 2.5rem 1rem 4rem;
+      padding: 1rem 1rem 4rem;
       gap: 1.5rem;
     }
 
@@ -349,13 +349,109 @@
     }
     /* 'both' fill-mode keeps opacity:0 during the stagger delay */
     .fadein { animation: fadein 0.2s ease-out both; }
+
+    /* ── Session bar ── */
+    #session-bar {
+      width: 100%;
+      max-width: 760px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 0.55rem 1rem;
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      flex-wrap: wrap;
+    }
+
+    .session-label {
+      font-size: 0.72rem;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      color: var(--muted);
+      flex-shrink: 0;
+    }
+
+    #session-select {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 5px;
+      color: var(--text);
+      font-family: inherit;
+      font-size: 0.82rem;
+      padding: 0.28rem 0.55rem;
+      flex: 1;
+      min-width: 100px;
+      max-width: 220px;
+      transition: border-color 0.15s;
+    }
+    #session-select:focus { outline: none; border-color: var(--accent); }
+
+    .btn-session {
+      font-family: inherit;
+      font-size: 0.7rem;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      padding: 0.28rem 0.65rem;
+      background: transparent;
+      border: 1px solid var(--border);
+      border-radius: 5px;
+      color: var(--muted);
+      cursor: pointer;
+      transition: all 0.15s;
+      flex-shrink: 0;
+    }
+    .btn-session:hover { color: var(--purple); border-color: var(--accent); }
+    .btn-session.danger:hover { color: var(--error); border-color: #553333; }
+    .btn-session:disabled,
+    .btn-session:disabled:hover { opacity: 0.35; cursor: not-allowed; color: var(--muted); border-color: var(--border); }
+
+    /* ── Repeat toggles ── */
+    .toggle-row {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      font-size: 0.8rem;
+      color: var(--muted);
+      flex-wrap: wrap;
+    }
+    .toggle-label {
+      font-size: 0.72rem;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      flex-shrink: 0;
+    }
+    .toggle-item {
+      display: flex;
+      align-items: center;
+      gap: 0.35rem;
+      cursor: pointer;
+      color: var(--text);
+      user-select: none;
+    }
+    .toggle-item input[type="checkbox"] {
+      accent-color: var(--accent);
+      width: 14px;
+      height: 14px;
+      cursor: pointer;
+      flex-shrink: 0;
+    }
   </style>
 </head>
 <body>
 
+<!-- Session bar -->
+<div id="session-bar">
+  <span class="session-label">Session:</span>
+  <select id="session-select" onchange="switchSession(this.value)"></select>
+  <button class="btn-session" onclick="newSession()">+ New</button>
+  <button class="btn-session" onclick="renameSession()">Rename</button>
+  <button class="btn-session danger" id="btn-delete-session" onclick="deleteSession()">Delete</button>
+</div>
+
 <header>
   <h1>Classpect Randomizer</h1>
-  <p class="subtitle">no repeats &middot; persists between sessions</p>
+  <p class="subtitle">configurable repeat rules &middot; multiple sessions</p>
 </header>
 
 <!-- Lists -->
@@ -419,6 +515,13 @@ Rage</textarea>
   <span>at a time</span>
 </div>
 
+<!-- Repeat rules -->
+<div class="toggle-row">
+  <span class="toggle-label">No repeat:</span>
+  <label class="toggle-item"><input type="checkbox" id="tog-aspects" onchange="onToggleChange()"> Aspects</label>
+  <label class="toggle-item"><input type="checkbox" id="tog-classes" onchange="onToggleChange()"> Classes</label>
+</div>
+
 <!-- Controls -->
 <div class="btn-row">
   <button class="btn-generate" id="btn-generate" onclick="generate()">Randomize</button>
@@ -432,16 +535,16 @@ Rage</textarea>
     <div id="result" class="placeholder">press randomize to begin</div>
   </div>
   <div class="stats">
-    <span>Used: <strong id="s-used">0</strong></span>
+    <span id="stat-aspects">Aspects: <strong id="s-used-a">0</strong>/<strong id="s-total-a">0</strong></span>
+    <span id="stat-classes">Classes: <strong id="s-used-c">0</strong>/<strong id="s-total-c">0</strong></span>
     <span>Remaining: <strong id="s-remaining">—</strong></span>
-    <span>Total possible: <strong id="s-total">—</strong></span>
   </div>
 </div>
 
 <!-- Used combinations log -->
 <div class="history-card">
   <div class="history-header">
-    <div class="history-title">Used Combinations</div>
+    <div class="history-title">Session Results</div>
     <div class="history-count" id="history-count"></div>
   </div>
   <div class="history-grid" id="history-grid">
@@ -450,19 +553,42 @@ Rage</textarea>
 </div>
 
 <script>
+  // ── Storage keys ───────────────────────────────────────
   const KEYS = {
-    used:      'classpect_used_v1',
+    sessions:  'classpect_sessions_v1',
     list1:     'classpect_list1',
     list2:     'classpect_list2',
     connector: 'classpect_connector',
     count:     'classpect_count',
   };
 
-  // ── State ──────────────────────────────────────────────
-  let usedCombos = new Set(JSON.parse(localStorage.getItem(KEYS.used) || '[]'));
+  // ── Sessions state ───────────────────────────────────
+  // Each session: { name, noRepeatAspects, noRepeatClasses, usedAspects: string[], usedClasses: string[], history: string[] }
+  let sessionsData = {
+    current: 'Session 1',
+    list: [{ name: 'Session 1', noRepeatAspects: true, noRepeatClasses: false, usedAspects: [], usedClasses: [], history: [] }]
+  };
 
-  // ── Init: restore saved lists/connector/count if present ─
-  function loadSaved() {
+  function getCurrentSession() {
+    const s = sessionsData.list.find(s => s.name === sessionsData.current) || sessionsData.list[0];
+    // Provide defaults for sessions saved before these fields existed
+    if (s.noRepeatAspects === undefined) s.noRepeatAspects = true;
+    if (s.noRepeatClasses === undefined) s.noRepeatClasses = false;
+    if (!s.usedClasses) s.usedClasses = [];
+    return s;
+  }
+
+  function saveSessions() {
+    localStorage.setItem(KEYS.sessions, JSON.stringify(sessionsData));
+  }
+
+  function loadSessions() {
+    const saved = localStorage.getItem(KEYS.sessions);
+    if (saved) { try { sessionsData = JSON.parse(saved); } catch(e) {} }
+  }
+
+  // ── Init: restore saved lists / connector / count ────────
+  function loadSettings() {
     const l1 = localStorage.getItem(KEYS.list1);
     const l2 = localStorage.getItem(KEYS.list2);
     const cn = localStorage.getItem(KEYS.connector);
@@ -473,22 +599,15 @@ Rage</textarea>
     if (ct !== null) document.getElementById('count').value = ct;
   }
 
-  // ── Helpers ────────────────────────────────────────────
+  // ── Helpers ─────────────────────────────────────────
   function getList(id) {
     return document.getElementById(id).value
-      .split('\n')
-      .map(s => s.trim())
-      .filter(Boolean);
+      .split('\n').map(s => s.trim()).filter(Boolean);
   }
-
-  function getConnector() {
-    return document.getElementById('connector').value;
-  }
-
+  function getConnector() { return document.getElementById('connector').value; }
   function getCount() {
     return Math.max(1, parseInt(document.getElementById('count').value) || 1);
   }
-
   function shuffle(arr) {
     const a = arr.slice();
     for (let i = a.length - 1; i > 0; i--) {
@@ -497,31 +616,11 @@ Rage</textarea>
     }
     return a;
   }
-
-  function getAllCombos() {
-    const l1 = getList('list1');
-    const l2 = getList('list2');
-    const c  = getConnector();
-    const out = [];
-    for (const a of l1)
-      for (const b of l2)
-        out.push(a + c + b);
-    return out;
-  }
-
   function esc(str) {
-    return str
-      .replace(/&/g, '&amp;')
-      .replace(/</g, '&lt;')
-      .replace(/>/g, '&gt;');
+    return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
   }
 
-  // ── Persistence ────────────────────────────────────────
-  function saveUsed() {
-    localStorage.setItem(KEYS.used, JSON.stringify([...usedCombos]));
-  }
-
-  // ── File upload ────────────────────────────────────────
+  // ── File upload ─────────────────────────────────────
   function loadFile(listId, fnameId, input) {
     const file = input.files[0];
     if (!file) return;
@@ -534,21 +633,18 @@ Rage</textarea>
       updateStats();
     };
     reader.readAsText(file);
-    input.value = ''; // allow re-uploading same file name
+    input.value = '';
   }
 
-  // ── Result display ─────────────────────────────────────
-  // state: 'placeholder' | 'error' | null (normal generation)
+  // ── Result display ───────────────────────────────────
   function showResult(picks, state) {
     const wrap  = document.getElementById('result-wrap');
     const label = document.getElementById('result-label');
-
     if (state === 'placeholder' || state === 'error') {
       label.textContent = 'Result';
       wrap.innerHTML = `<div id="result" class="${state}">${esc(picks[0])}</div>`;
       return;
     }
-
     if (picks.length === 1) {
       label.textContent = 'Result';
       wrap.innerHTML = '<div id="result"></div>';
@@ -566,61 +662,218 @@ Rage</textarea>
     }
   }
 
-  // ── UI updates ─────────────────────────────────────────
+  // ── UI updates ─────────────────────────────────────
   function updateStats() {
-    const all       = getAllCombos();
-    const total     = all.length;
-    const remaining = all.filter(c => !usedCombos.has(c)).length;
-    const used      = usedCombos.size;
+    const l1 = getList('list1');
+    const l2 = getList('list2');
+    const s  = getCurrentSession();
+    const noA = s.noRepeatAspects !== false;
+    const noC = s.noRepeatClasses === true;
 
-    document.getElementById('s-used').textContent      = used;
+    const usedA = s.usedAspects.length;
+    const usedC = s.usedClasses.length;
+    const remA  = Math.max(0, l2.length - usedA);
+    const remC  = Math.max(0, l1.length - usedC);
+
+    const statA = document.getElementById('stat-aspects');
+    const statC = document.getElementById('stat-classes');
+    statA.style.display = noA ? '' : 'none';
+    statC.style.display = noC ? '' : 'none';
+
+    if (noA) {
+      document.getElementById('s-used-a').textContent  = usedA;
+      document.getElementById('s-total-a').textContent = l2.length;
+    }
+    if (noC) {
+      document.getElementById('s-used-c').textContent  = usedC;
+      document.getElementById('s-total-c').textContent = l1.length;
+    }
+
+    let remaining;
+    if      (!noA && !noC) remaining = '∞';
+    else if (noA  && noC)  remaining = Math.min(remA, remC);
+    else if (noA)          remaining = remA;
+    else                   remaining = remC;
+
     document.getElementById('s-remaining').textContent = remaining;
-    document.getElementById('s-total').textContent     = total;
 
-    const exhausted = total > 0 && remaining === 0;
+    const exhausted = (noA || noC) && remaining === 0;
     document.getElementById('btn-generate').disabled = exhausted;
-    document.getElementById('btn-reset').disabled    = used === 0;
+    document.getElementById('btn-reset').disabled    = s.history.length === 0;
   }
 
   function updateHistory() {
-    const grid = document.getElementById('history-grid');
+    const grid    = document.getElementById('history-grid');
     const countEl = document.getElementById('history-count');
+    const session = getCurrentSession();
 
-    if (usedCombos.size === 0) {
+    if (session.history.length === 0) {
       grid.innerHTML = '<span class="history-placeholder">none yet.</span>';
       countEl.textContent = '';
       return;
     }
-
-    const items = [...usedCombos].reverse(); // most recent first
-    grid.innerHTML = items
-      .map(c => `<span class="history-tag">${esc(c)}</span>`)
-      .join('');
-    countEl.textContent = `${items.length} combo${items.length !== 1 ? 's' : ''}`;
+    const items = [...session.history].reverse();
+    grid.innerHTML = items.map(c => `<span class="history-tag">${esc(c)}</span>`).join('');
+    countEl.textContent = `${session.history.length} result${session.history.length !== 1 ? 's' : ''}`;
   }
 
-  // ── Actions ────────────────────────────────────────────
+  // ── Session management ─────────────────────────────
+  function renderSessionSelect() {
+    const sel = document.getElementById('session-select');
+    sel.innerHTML = sessionsData.list
+      .map(s => `<option value="${esc(s.name)}"
+        ${s.name === sessionsData.current ? ' selected' : ''}>${esc(s.name)}</option>`)
+      .join('');
+    document.getElementById('btn-delete-session').disabled = sessionsData.list.length <= 1;
+  }
+
+  function switchSession(name) {
+    sessionsData.current = name;
+    saveSessions();
+    syncToggles();
+    showResult(['press randomize to begin'], 'placeholder');
+    updateStats();
+    updateHistory();
+  }
+
+  function newSession() {
+    const name = prompt('New session name:', `Session ${sessionsData.list.length + 1}`);
+    if (!name || !name.trim()) return;
+    const trimmed = name.trim();
+    if (sessionsData.list.some(s => s.name === trimmed)) {
+      alert(`A session named "${trimmed}" already exists.`); return;
+    }
+    const cur = getCurrentSession();
+    sessionsData.list.push({
+      name: trimmed,
+      noRepeatAspects: cur.noRepeatAspects !== false,
+      noRepeatClasses: cur.noRepeatClasses === true,
+      usedAspects: [], usedClasses: [], history: []
+    });
+    sessionsData.current = trimmed;
+    saveSessions();
+    renderSessionSelect();
+    showResult(['press randomize to begin'], 'placeholder');
+    updateStats();
+    updateHistory();
+  }
+
+  function renameSession() {
+    const session = getCurrentSession();
+    const name = prompt('Rename session:', session.name);
+    if (!name || !name.trim() || name.trim() === session.name) return;
+    const trimmed = name.trim();
+    if (sessionsData.list.some(s => s.name === trimmed)) {
+      alert(`A session named "${trimmed}" already exists.`); return;
+    }
+    session.name = trimmed;
+    sessionsData.current = trimmed;
+    saveSessions();
+    renderSessionSelect();
+  }
+
+  function deleteSession() {
+    if (sessionsData.list.length <= 1) return;
+    const session = getCurrentSession();
+    if (!confirm(`Delete session "${session.name}"?\nThis cannot be undone.`)) return;
+    sessionsData.list = sessionsData.list.filter(s => s.name !== session.name);
+    sessionsData.current = sessionsData.list[0].name;
+    saveSessions();
+    renderSessionSelect();
+    showResult(['press randomize to begin'], 'placeholder');
+    updateStats();
+    updateHistory();
+  }
+
+  // ── Toggle sync ─────────────────────────────────
+  function syncToggles() {
+    const s = getCurrentSession();
+    document.getElementById('tog-aspects').checked = s.noRepeatAspects !== false;
+    document.getElementById('tog-classes').checked = s.noRepeatClasses === true;
+  }
+
+  function onToggleChange() {
+    const s = getCurrentSession();
+    s.noRepeatAspects = document.getElementById('tog-aspects').checked;
+    s.noRepeatClasses = document.getElementById('tog-classes').checked;
+    saveSessions();
+    updateStats();
+  }
+
+  // ── Actions ─────────────────────────────────────────
   function generate() {
-    const all       = getAllCombos();
-    const available = all.filter(c => !usedCombos.has(c));
+    const l1 = getList('list1');
+    const l2 = getList('list2');
+    const c  = getConnector();
+    const session = getCurrentSession();
 
-    if (all.length === 0) {
-      showResult(['add items to both lists first!'], 'error');
-      return;
+    if (l1.length === 0 || l2.length === 0) {
+      showResult(['add items to both lists first!'], 'error'); return;
     }
 
-    if (available.length === 0) {
-      showResult(['all combinations used — reset to start over!'], 'error');
-      updateStats();
-      return;
+    const noA = session.noRepeatAspects !== false;
+    const noC = session.noRepeatClasses === true;
+
+    const usedASet = new Set(session.usedAspects);
+    const usedCSet = new Set(session.usedClasses);
+    const availA   = noA ? l2.filter(a => !usedASet.has(a)) : [...l2];
+    const availC   = noC ? l1.filter(a => !usedCSet.has(a)) : [...l1];
+
+    if (noA && availA.length === 0) {
+      showResult(['all aspects used — reset or start a new session!'], 'error');
+      updateStats(); return;
+    }
+    if (noC && availC.length === 0) {
+      showResult(['all classes used — reset or start a new session!'], 'error');
+      updateStats(); return;
     }
 
-    // Pick min(requested, available) unique combos via Fisher-Yates
-    const n     = Math.min(getCount(), available.length);
-    const picks = shuffle(available).slice(0, n);
+    const picks         = [];
+    const pickedAspects = [];
+    const pickedClasses = [];
 
-    picks.forEach(c => usedCombos.add(c));
-    saveUsed();
+    if (!noA && !noC) {
+      // Fully random — no depletion
+      const n = getCount();
+      for (let i = 0; i < n; i++)
+        picks.push(l1[Math.floor(Math.random() * l1.length)] + c + l2[Math.floor(Math.random() * l2.length)]);
+
+    } else if (noA && !noC) {
+      // Aspects constrained, classes free
+      const n = Math.min(getCount(), availA.length);
+      shuffle(availA).slice(0, n).forEach(aspect => {
+        picks.push(l1[Math.floor(Math.random() * l1.length)] + c + aspect);
+        pickedAspects.push(aspect);
+      });
+
+    } else if (!noA && noC) {
+      // Classes constrained, aspects free
+      const n = Math.min(getCount(), availC.length);
+      shuffle(availC).slice(0, n).forEach(cls => {
+        picks.push(cls + c + l2[Math.floor(Math.random() * l2.length)]);
+        pickedClasses.push(cls);
+      });
+
+    } else {
+      // Both constrained — shuffle each pool, zip into pairs
+      const n  = Math.min(getCount(), availA.length, availC.length);
+      const sA = shuffle(availA).slice(0, n);
+      const sC = shuffle(availC).slice(0, n);
+      for (let i = 0; i < n; i++) {
+        picks.push(sC[i] + c + sA[i]);
+        pickedAspects.push(sA[i]);
+        pickedClasses.push(sC[i]);
+      }
+    }
+
+    if (picks.length === 0) {
+      showResult(['nothing available to generate!'], 'error'); return;
+    }
+
+    session.usedAspects.push(...pickedAspects);
+    session.usedClasses.push(...pickedClasses);
+    session.history.push(...picks);
+    saveSessions();
 
     showResult(picks, null);
     updateStats();
@@ -628,36 +881,42 @@ Rage</textarea>
   }
 
   function resetUsed() {
-    if (usedCombos.size === 0) return;
-    if (!confirm(`Clear all ${usedCombos.size} used combination(s) and start fresh?`)) return;
-
-    usedCombos.clear();
-    saveUsed();
-
+    const session = getCurrentSession();
+    if (session.history.length === 0) return;
+    const tracked = session.usedAspects.length + session.usedClasses.length;
+    const msg = tracked > 0
+      ? `Reset "${session.name}"?\nAll tracking and history will be cleared.`
+      : `Clear history for "${session.name}"?`;
+    if (!confirm(msg)) return;
+    session.usedAspects = [];
+    session.usedClasses = [];
+    session.history     = [];
+    saveSessions();
     showResult(['press randomize to begin'], 'placeholder');
     updateStats();
     updateHistory();
   }
 
-  // ── Wire up list/connector changes ─────────────────────
+  // ── Wire up list / connector / count changes ──────────────
   ['list1', 'list2'].forEach(id => {
     document.getElementById(id).addEventListener('input', () => {
       localStorage.setItem(KEYS[id], document.getElementById(id).value);
       updateStats();
     });
   });
-
   document.getElementById('connector').addEventListener('input', () => {
     localStorage.setItem(KEYS.connector, document.getElementById('connector').value);
     updateStats();
   });
-
   document.getElementById('count').addEventListener('input', () => {
     localStorage.setItem(KEYS.count, document.getElementById('count').value);
   });
 
-  // ── Boot ───────────────────────────────────────────────
-  loadSaved();
+  // ── Boot ────────────────────────────────────────────
+  loadSessions();
+  loadSettings();
+  renderSessionSelect();
+  syncToggles();
   updateStats();
   updateHistory();
 </script>
